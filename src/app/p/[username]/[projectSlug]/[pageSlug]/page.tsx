@@ -148,23 +148,23 @@ export default async function PublicPage({
 
     // Dynamic Style Injection
     const themeStyles = {
-        '--bg-color': effectiveConfig.colors?.background || DEFAULT_CONFIG.colors!.background,
-        '--primary': effectiveConfig.colors?.primary || DEFAULT_CONFIG.colors!.primary,
-        '--secondary': effectiveConfig.colors?.secondary || DEFAULT_CONFIG.colors!.secondary,
-        '--text': effectiveConfig.colors?.text || DEFAULT_CONFIG.colors!.text,
-        '--link': effectiveConfig.colors?.link || DEFAULT_CONFIG.colors!.link,
-        '--btn-text': effectiveConfig.colors?.buttonText || DEFAULT_CONFIG.colors!.buttonText,
-        '--font-family': effectiveConfig.typography?.fontFamily || DEFAULT_CONFIG.typography!.fontFamily,
+        '--pico-bg': effectiveConfig.colors?.background || DEFAULT_CONFIG.colors!.background,
+        '--pico-primary': effectiveConfig.colors?.primary || DEFAULT_CONFIG.colors!.primary,
+        '--pico-secondary': effectiveConfig.colors?.secondary || DEFAULT_CONFIG.colors!.secondary,
+        '--pico-text': effectiveConfig.colors?.text || DEFAULT_CONFIG.colors!.text,
+        '--pico-link': effectiveConfig.colors?.link || DEFAULT_CONFIG.colors!.link,
+        '--pico-btn-text': effectiveConfig.colors?.buttonText || DEFAULT_CONFIG.colors!.buttonText,
+        '--pico-font': effectiveConfig.typography?.fontFamily || DEFAULT_CONFIG.typography!.fontFamily,
 
         // New Phase 1 Variables
-        '--border-radius': effectiveConfig.borders?.radius || '8px',
-        '--border-width': effectiveConfig.borders?.width || '1px',
-        '--divider-style': effectiveConfig.dividers?.style || 'solid',
+        '--pico-radius': effectiveConfig.borders?.radius || '8px',
+        '--pico-border-width': effectiveConfig.borders?.width || '1px',
+        '--pico-divider-style': effectiveConfig.dividers?.style || 'solid',
         '--pico-shadow': getBoxShadow(effectiveConfig.shadows?.style || 'none', effectiveConfig.colors?.secondary || '#e5e7eb', effectiveConfig.shadows?.opacity ?? 0.5),
 
-        fontFamily: 'var(--font-family)',
-        backgroundColor: 'var(--bg-color)',
-        color: 'var(--text)',
+        fontFamily: 'var(--pico-font)',
+        backgroundColor: 'var(--pico-bg)',
+        color: 'var(--pico-text)',
         backgroundImage: effectiveConfig.headerBackgroundImage ? `url(${effectiveConfig.headerBackgroundImage})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -173,21 +173,8 @@ export default async function PublicPage({
 
     return (
         <>
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                .public-page-root {
-                    background-color: var(--bg-color);
-                }
-                @media (min-width: 1024px) {
-                    .public-page-root {
-                        background-color: color-mix(in srgb, var(--primary), black 10%);
-                    }
-                }
-            `}} />
-            <div style={themeStyles} className="public-page-root min-h-screen w-full flex flex-col justify-center lg:py-8 transition-colors duration-300">
-                <div
-                    className="w-full lg:max-w-[480px] mx-auto min-h-screen lg:min-h-0 bg-[var(--bg-color)] lg:shadow-[var(--pico-shadow)] lg:rounded-[calc(var(--border-radius)*2)] transition-shadow duration-300 px-4 py-12 sm:px-6 lg:px-8"
-                >
+            <div style={themeStyles} className="pico-background min-h-screen w-full flex flex-col justify-center lg:py-8 transition-colors duration-300">
+                <div className="pico-container">
                     {/* Blocks Rendering */}
                     <div className="space-y-6">
                         {blocks?.sort((a, b) => a.position - b.position).map((block) => {
@@ -206,18 +193,18 @@ export default async function PublicPage({
                                         return <SocialGridBlock content={block.content as any} config={effectiveConfig} />
 
                                     case 'separator':
-                                        return <hr className="border-t my-4 w-2/3 mx-auto opacity-50" style={{ borderColor: 'var(--secondary)', borderStyle: 'var(--divider-style)' }} />
+                                        return <hr className="pico-separator" />
 
                                     case 'title':
                                         return (
-                                            <h2 className={`text-2xl font-bold w-full mb-2 ${block.content.align === 'center' ? 'text-center' : block.content.align === 'right' ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text)' }}>
+                                            <h2 className={`pico-title ${block.content.align === 'center' ? 'pico-text-center' : block.content.align === 'right' ? 'pico-text-right' : 'pico-text-left'}`}>
                                                 {block.content.title}
                                             </h2>
                                         )
 
                                     case 'text':
                                         return (
-                                            <div className="w-full whitespace-pre-wrap mb-4" style={{ color: 'var(--text)' }}>
+                                            <div className="pico-text-block">
                                                 {block.content.text}
                                             </div>
                                         )

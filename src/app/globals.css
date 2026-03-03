@@ -1,5 +1,13 @@
+/* ========================================================================= */
+/* Base/Tailwind                                                             */
+/* Styles globaux pour la structure Tailwind et polices basiques             */
+/* ========================================================================= */
 @import "tailwindcss";
 
+/* ========================================================================= */
+/* Dashboard Picoverse                                                       */
+/* Styles spécifiques à l'interface d'administration (Sidebar, Editeur, etc) */
+/* ========================================================================= */
 :root {
   /* Couleurs de marque */
   --primary: #6A58A9;

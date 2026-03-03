@@ -85,7 +85,7 @@ export function EmbedBlock({ content, config }: EmbedBlockProps) {
         <div
             className="w-full relative overflow-hidden bg-gray-50"
             style={{
-                borderRadius: 'var(--border-radius)', // Use CSS var injected by page/preview
+                borderRadius: 'var(--pico-radius)', // Use CSS var injected by page/preview
                 ...heightStyle
             }}
         >
@@ -110,7 +110,7 @@ export function EmbedBlock({ content, config }: EmbedBlockProps) {
                     setIsLoading(false)
                     setHasError(true)
                 }}
-                style={{ borderRadius: 'var(--border-radius)' }}
+                style={{ borderRadius: 'var(--pico-radius)' }}
             />
 
             {hasError && (
