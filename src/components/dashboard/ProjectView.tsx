@@ -24,15 +24,15 @@ export function ProjectView({ project, initialPages, username }: ProjectViewProp
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white shadow">
-                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="min-h-screen pv-dark-100">
+            <header className="bg-pv-dark-0 text-white-0">
+                <div className="mx-auto max-w-7xl px-4 py-pv-20 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                            <h1 className="font-pv-inter font-pv-bold text-pv-12 text-white-0">
                                 {project.name}
                             </h1>
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 font-pv-inter font-pv-regular text-pv-12 text-white-0 opacity-70">
                                 Gérez les pages de votre projet
                             </p>
                         </div>
@@ -41,7 +41,16 @@ export function ProjectView({ project, initialPages, username }: ProjectViewProp
             </header>
             <main>
                 <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 min-[500px]:grid-cols-2 min-[992px]:grid-cols-3 gap-6 w-fit mx-auto justify-items-start">
+                        <CreatePageModal projectId={project.id} onSuccess={handlePageCreated}>
+                            <div id="action-add-page" className="w-[222px] h-[304px] border-[4px] border-dashed border-pv-brand-900 rounded-xl p-6 flex flex-col items-center justify-center hover:opacity-80 cursor-pointer transition-all group text-pv-brand-900">
+                                <div className="h-12 w-12 rounded-full bg-pv-gradient-soft border-[4px] border-pv-brand-900 flex items-center justify-center mb-4 transition-colors">
+                                    <Plus className="h-5 w-5 text-pv-brand-900 group-hover:scale-110 transition-transform" />
+                                </div>
+                                <span className="font-pv-inter font-pv-bold text-pv-16 text-center">Ajouter une page</span>
+                            </div>
+                        </CreatePageModal>
+
                         {pages.map((page) => (
                             <PageCard
                                 key={page.id}
@@ -51,16 +60,6 @@ export function ProjectView({ project, initialPages, username }: ProjectViewProp
                                 username={username}
                             />
                         ))}
-
-                        <CreatePageModal projectId={project.id} onSuccess={handlePageCreated}>
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center h-full min-h-[200px] hover:border-indigo-500 hover:bg-gray-50 cursor-pointer transition-all group">
-                                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-indigo-100 transition-colors mb-4">
-                                    <Plus className="h-6 w-6 text-gray-400 group-hover:text-indigo-600" />
-                                </div>
-                                <span className="text-sm font-medium text-gray-900">Ajouter une page</span>
-                                <span className="text-xs text-gray-500 mt-1">Créez une nouvelle page pour votre projet</span>
-                            </div>
-                        </CreatePageModal>
                     </div>
 
                     {pages.length === 0 && (

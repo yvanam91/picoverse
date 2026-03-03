@@ -1,8 +1,25 @@
 export default function ToolsPage() {
     return (
-        <div className="p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Outils</h1>
-            <p className="text-gray-500">Outils et intégrations (bientôt disponible)</p>
+        <div className="min-h-screen bg-gray-50">
+            <header className="bg-pv-dark-0 text-white-0">
+                <div className="mx-auto max-w-7xl px-4 py-pv-20 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="font-pv-inter font-pv-bold text-pv-12 text-white-0">
+                                Outils
+                            </h1>
+                            <p className="mt-1 font-pv-inter font-pv-regular text-pv-12 text-white-0 opacity-70">
+                                Outils et intégrations (bientôt disponible)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main>
+                <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                    {/* Placeholder content for Tools page */}
+                </div>
+            </main>
         </div>
     )
 }

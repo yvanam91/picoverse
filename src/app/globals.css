@@ -23,6 +23,52 @@
 
   /* Arrondis */
   --radius: 0.75rem;
+
+  /* Picoverse Design Tokens - Colors */
+  --pv-dark-0: #0B0911;
+  --pv-dark-100: #16121B;
+  --pv-dark-200: #3C3842;
+  --pv-brand-500: #A997DF;
+  --pv-brand-900: #6A58A9;
+  --pv-light-100: #DDC4DD;
+  --pv-lighter-200: #DCCFEC;
+  --pv-white: #F3EEF8;
+  --pv-white-0: #F3EEF8;
+  --pv-accent-red: #FF383C;
+
+  /* Picoverse Design Tokens - Gradients */
+  --pv-gradient-soft: linear-gradient(45deg, var(--pv-light-100) 0%, var(--pv-brand-500) 100%);
+  --pv-gradient-strong: linear-gradient(45deg, var(--pv-brand-900) 0%, var(--pv-brand-500) 100%);
+
+  /* Picoverse Design Tokens - Spacing */
+  --pv-spacing-4: 4px;
+  --pv-spacing-8: 8px;
+  --pv-spacing-12: 12px;
+  --pv-spacing-16: 16px;
+  --pv-spacing-20: 20px;
+  --pv-spacing-28: 28px;
+  --pv-spacing-40: 40px;
+  --pv-spacing-48: 48px;
+  --pv-spacing-60: 60px;
+
+  /* Picoverse Design Tokens - Radius */
+  --pv-radius-4: 4px;
+  --pv-radius-8: 8px;
+  --pv-radius-12: 12px;
+  --pv-radius-20: 20px;
+
+  /* Picoverse Design Tokens - Typography */
+  --pv-font-inter: 'Inter', sans-serif;
+  --pv-font-jost: 'Jost', sans-serif;
+
+  --pv-weight-regular: 400;
+  --pv-weight-bold: 700;
+
+  --pv-text-10: 10px;
+  --pv-text-12: 12px;
+  --pv-text-16: 16px;
+  --pv-text-28: 28px;
+  --pv-text-38: 38px;
 }
 
 @theme inline {
@@ -30,6 +76,51 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Picoverse Colors */
+  --color-pv-dark-0: var(--pv-dark-0);
+  --color-pv-dark-100: var(--pv-dark-100);
+  --color-pv-dark-200: var(--pv-dark-200);
+  --color-pv-brand-500: var(--pv-brand-500);
+  --color-pv-brand-900: var(--pv-brand-900);
+  --color-pv-light-100: var(--pv-light-100);
+  --color-pv-lighter-200: var(--pv-lighter-200);
+  --color-pv-white: var(--pv-white);
+  --color-pv-white-0: var(--pv-white-0);
+
+  /* Picoverse Gradients */
+  --background-image-pv-gradient-soft: var(--pv-gradient-soft);
+  --background-image-pv-gradient-strong: var(--pv-gradient-strong);
+
+  /* Picoverse Spacing */
+  --spacing-pv-4: var(--pv-spacing-4);
+  --spacing-pv-8: var(--pv-spacing-8);
+  --spacing-pv-12: var(--pv-spacing-12);
+  --spacing-pv-16: var(--pv-spacing-16);
+  --spacing-pv-20: var(--pv-spacing-20);
+  --spacing-pv-28: var(--pv-spacing-28);
+  --spacing-pv-40: var(--pv-spacing-40);
+  --spacing-pv-48: var(--pv-spacing-48);
+  --spacing-pv-60: var(--pv-spacing-60);
+
+  /* Picoverse Radius */
+  --radius-pv-4: var(--pv-radius-4);
+  --radius-pv-8: var(--pv-radius-8);
+  --radius-pv-12: var(--pv-radius-12);
+  --radius-pv-20: var(--pv-radius-20);
+
+  /* Picoverse Typography */
+  --font-pv-inter: var(--pv-font-inter);
+  --font-pv-jost: var(--pv-font-jost);
+
+  --font-weight-pv-regular: var(--pv-weight-regular);
+  --font-weight-pv-bold: var(--pv-weight-bold);
+
+  --text-pv-10: var(--pv-text-10);
+  --text-pv-12: var(--pv-text-12);
+  --text-pv-16: var(--pv-text-16);
+  --text-pv-28: var(--pv-text-28);
+  --text-pv-38: var(--pv-text-38);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -52,4 +143,34 @@ body {
   select {
     color: var(--foreground);
   }
+}
+
+.text-white-0 {
+  color: var(--pv-white-0);
+}
+
+.sidebar-item:hover {
+  background-color: var(--pv-dark-100);
+  color: var(--pv-brand-500);
+}
+
+.item-focus {
+  background-image: var(--pv-gradient-soft);
+  color: var(--pv-white-0);
+}
+
+.pv-dark-100 {
+  background-color: var(--pv-dark-100);
+}
+
+.pv-dark-0 {
+  background-color: var(--pv-dark-0);
+}
+
+.pv-dark-200 {
+  background-color: var(--pv-dark-200);
+}
+
+.alert-background {
+  background-color: color-mix(in srgb, var(--pv-accent-red), transparent 90%);
 }

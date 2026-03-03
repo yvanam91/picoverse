@@ -106,11 +106,11 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pv-dark-0 p-3">
             {/* Rename Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="rounded-xl shadow-sm border-gray-200 overflow-hidden">
                 <div className="p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-1">Nom du projet</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-1 text-white-0">Nom du projet</h2>
                     <p className="text-sm text-gray-500 mb-6">
                         Le nom de votre projet est visible publiquement.
                     </p>
@@ -148,7 +148,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
             </div>
 
             {/* Danger Zone */}
-            <div className="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+            <div className="rounded-xl shadow-sm overflow-hidden alert-background">
                 <div className="p-6">
                     <h2 className="text-lg font-semibold text-red-600 mb-1">Zone de danger</h2>
                     <p className="text-sm text-gray-500 mb-6">

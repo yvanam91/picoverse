@@ -53,28 +53,28 @@ export function PageCard({ page, projectSlug, onDelete, username }: PageCardProp
     const description = page.description || page.config?.bio || 'Aucune description fournie.'
 
     return (
-        <div className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow h-full">
+        <div className="card-page group relative flex flex-col justify-between w-[222px] h-[304px] bg-pv-dark-0 text-white-0 border border-gray-200 rounded-xl p-pv-16 hover:shadow-md transition-shadow">
 
             <Link href={`/dashboard/${projectSlug}/pages/${page.id}`} className="absolute inset-0 z-0" aria-label={`Editer ${page.title}`} />
 
             <div className="z-10 pointer-events-none">
-                <h3 className="text-lg font-semibold text-indigo-600 mb-2 truncate pr-8">
+                <h3 className="text-lg font-semibold text-white-0 mb-2 truncate pr-8">
                     {page.title}
                 </h3>
 
-                <div className="flex items-center text-xs text-gray-500 mb-4">
+                <div className="flex items-center text-xs text-white-0/60 mb-4">
                     <Calendar className="h-3 w-3 mr-1" />
                     <span>Date de création : {formatDate(page.created_at)}</span>
                 </div>
 
-                <p className="text-sm text-gray-600 line-clamp-3 mb-6 h-14">
+                <p className="text-sm text-white-0/80 line-clamp-3 mb-6 h-14">
                     {description}
                 </p>
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t border-gray-100 z-10 relative">
+            <div className="flex justify-between items-center pt-4 border-t border-white-0/10 z-10 relative">
                 <button
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    className="p-2 text-white-0/40 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-colors"
                     onClick={(e) => {
                         e.stopPropagation()
                         if (window.confirm(`Voulez-vous vraiment supprimer la page "${page.title}" ?`)) {
@@ -99,7 +99,7 @@ export function PageCard({ page, projectSlug, onDelete, username }: PageCardProp
                             href={`/p/${username}/${projectSlug}/${page.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
+                            className="p-2 text-white-0/40 hover:text-pv-brand-500 hover:bg-pv-brand-500/10 rounded-full transition-colors"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <ExternalLink className="h-4 w-4" />
