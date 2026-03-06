@@ -5,6 +5,7 @@ import { Metadata } from 'next'
 import { BlockFactory } from '@/components/shared/BlockFactory'
 import { getBoxShadow } from '@/lib/utils'
 import { fontMap } from '@/styles/fonts'
+import { AnalyticsTracker } from '@/components/public/AnalyticsTracker'
 
 export const dynamic = 'force-dynamic'
 
@@ -152,6 +153,8 @@ export default async function PublicPage({
 
     return (
         <div style={themeStyles} className="pico-background min-h-screen w-full flex flex-col justify-center lg:py-8 transition-colors duration-300">
+            <AnalyticsTracker projectId={data.project.id} pageId={page.id} />
+
             <div className="pico-container">
                 {/* Blocks Rendering */}
                 <div className="space-y-6">
@@ -161,7 +164,12 @@ export default async function PublicPage({
                         const widthClass = block.content.width === 'half' ? 'w-[calc(50%-0.5rem)]' : 'w-full'
 
                         return (
-                            <div key={block.id} className={widthClass}>
+                            <div
+                                key={block.id}
+                                className={widthClass}
+                                data-pv-block-id={block.id}
+                                data-pv-block-type={block.type}
+                            >
                                 <BlockFactory block={block} config={effectiveConfig} />
                             </div>
                         )
