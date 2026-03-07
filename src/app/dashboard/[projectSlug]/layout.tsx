@@ -35,10 +35,10 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-pv-dark-100">
             {/* Desktop Sidebar - Hidden on mobile */}
             <Sidebar
-                className="hidden md:flex"
+                className="hidden md:flex w-64"
                 projectSlug={projectSlug}
                 projects={projects as any[]}
                 currentProject={currentProject as any}

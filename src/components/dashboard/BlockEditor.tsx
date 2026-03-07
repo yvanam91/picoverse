@@ -109,26 +109,38 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
         }
 
         return (
-            <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-8 w-full">
+                <div className="flex flex-col gap-8 w-full">
                     {links.map((link: any, index: number) => (
-                        <div key={index} className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <h4 className="text-xs font-semibold uppercase text-gray-500">Lien {index + 1}</h4>
-                            <div>
-                                <input
-                                    type="text"
-                                    value={link.label || ''}
-                                    onChange={(e) => updateLink(index, 'label', e.target.value)}
-                                    placeholder={`Titre du lien ${index + 1}`}
-                                    className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border mb-2 placeholder:text-pv-white-0/80 focus:placeholder-transparent"
-                                />
-                                <input
-                                    type="url"
-                                    value={link.url || ''}
-                                    onChange={(e) => updateLink(index, 'url', e.target.value)}
-                                    placeholder="https://..."
-                                    className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/80 focus:placeholder-transparent"
-                                />
+                        <div key={index} className="w-full space-y-3">
+                            <h4 className="block text-[10px] font-pv-bold text-pv-brand-500 uppercase tracking-widest mb-1.5 border-b border-pv-brand-500/20 pb-1">
+                                Lien {index + 1}
+                            </h4>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">
+                                        Titre du bouton
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={link.label || ''}
+                                        onChange={(e) => updateLink(index, 'label', e.target.value)}
+                                        placeholder={`Mon lien ${index + 1}`}
+                                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 focus:placeholder-transparent transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">
+                                        URL de destination
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={link.url || ''}
+                                        onChange={(e) => updateLink(index, 'url', e.target.value)}
+                                        placeholder="https://..."
+                                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 focus:placeholder-transparent transition-colors"
+                                    />
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -513,24 +525,24 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
         }
 
         return (
-            <div className="space-y-3">
+            <div className="space-y-3 w-full">
                 <div>
-                    <label className="block text-xs font-medium text-pv-white-0 uppercase tracking-wide">Titre du bouton</label>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Titre du bouton</label>
                     <input
                         type="text"
-                        value={(isEditing ? editState.title : block.content.title) || ''}
-                        onChange={(e) => onEditChange('title', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/80 focus:placeholder-transparent"
+                        value={block.content.title || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, title: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 focus:placeholder-transparent transition-colors"
                         placeholder="Mon super lien"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-pv-white-0 uppercase tracking-wide">URL</label>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">URL</label>
                     <input
                         type="url"
-                        value={(isEditing ? editState.url : block.content.url) || ''}
-                        onChange={(e) => onEditChange('url', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/80 focus:placeholder-transparent"
+                        value={block.content.url || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, url: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 focus:placeholder-transparent transition-colors"
                         placeholder="https://..."
                     />
                 </div>
@@ -572,7 +584,6 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                 {block.type === 'text' && renderTextBlock()}
                 {block.type === 'hero' && renderHeroBlock()}
                 {block.type === 'double-link' && renderDoubleLinkBlock()}
-                {block.type === 'double-link' && renderDoubleLinkBlock()}
                 {['link', 'file', 'image', 'embed'].includes(block.type) && renderStandardContent()}
             </div>
 
@@ -594,16 +605,7 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                     {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </button>
 
-                {isEditing && ['link', 'embed'].includes(block.type) && (
-                    <button
-                        onClick={onSave}
-                        disabled={editState.loading}
-                        className="rounded-md bg-pv-brand-500/20 p-1.5 text-pv-brand-500 hover:bg-pv-brand-500/30 disabled:opacity-50"
-                        title="Enregistrer"
-                    >
-                        {editState.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    </button>
-                )}
+
             </div>
         </div>
     )

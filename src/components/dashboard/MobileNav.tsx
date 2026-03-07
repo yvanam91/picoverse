@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence, useAnimationControls, PanInfo } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { Sidebar } from './Sidebar'
@@ -14,6 +15,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ projectSlug, projects, currentProject, username }: MobileNavProps) {
+    const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const controls = useAnimationControls()
@@ -29,6 +31,11 @@ export function MobileNav({ projectSlug, projects, currentProject, username }: M
             transition: { duration: 1.5, delay: 0.5, ease: "easeInOut" }
         })
     }, [nudgeControls])
+
+    // Close drawer when navigating
+    useEffect(() => {
+        setIsOpen(false)
+    }, [pathname])
 
     const toggleOpen = () => setIsOpen(!isOpen)
 
@@ -51,7 +58,7 @@ export function MobileNav({ projectSlug, projects, currentProject, username }: M
             {/* Burger Button - Fixed Top Left */}
             <button
                 onClick={toggleOpen}
-                className="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md border border-gray-100 text-gray-700 active:scale-95 transition-transform"
+                className="fixed top-4 left-4 z-50 p-2 bg-pv-dark-0/80 backdrop-blur-md rounded-xl border border-white-0/10 text-white-0 shadow-2xl active:scale-95 transition-all hover:bg-pv-brand-500/10 hover:border-pv-brand-500/30"
             >
                 {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -82,7 +89,7 @@ export function MobileNav({ projectSlug, projects, currentProject, username }: M
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsOpen(false)}
-                        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+                        className="fixed inset-0 bg-black/80 z-40 backdrop-blur-sm"
                     />
                 )}
             </AnimatePresence>
@@ -103,12 +110,12 @@ export function MobileNav({ projectSlug, projects, currentProject, username }: M
                         onDragEnd={(e, info) => {
                             if (info.offset.x < -50) setIsOpen(false)
                         }}
-                        className="fixed top-0 bottom-0 left-0 w-[80%] max-w-sm bg-white z-50 shadow-2xl h-full"
+                        className="fixed top-0 bottom-0 left-0 w-[66%] bg-pv-dark-0 z-50 shadow-2xl h-full border-r border-white-0/10"
                     >
                         {/* Reuse Sidebar but inside the drawer */}
-                        {/* We need to adjust Sidebar to fill height and maybe hide some borders if needed */}
                         <div className="h-full overflow-y-auto">
                             <Sidebar
+                                className="w-full"
                                 projectSlug={projectSlug}
                                 projects={projects}
                                 currentProject={currentProject}

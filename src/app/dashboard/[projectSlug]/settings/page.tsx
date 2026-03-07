@@ -17,7 +17,7 @@ export default async function SettingsPage({
     return (
         <div className="min-h-screen pv-dark-100">
             <header className="pv-dark-0 text-white-0">
-                <div className="mx-auto max-w-7xl px-4 py-pv-20 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl pl-16 pr-4 py-pv-20 md:px-8">
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="font-pv-inter font-pv-bold text-pv-12 text-white-0">

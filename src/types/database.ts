@@ -4,6 +4,7 @@ export type Profile = {
     email: string
     username: string | null
     full_name: string | null
+    plan?: string | null
 }
 
 

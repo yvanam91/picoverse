@@ -67,6 +67,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
     const [isApplying, setIsApplying] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [activeView, setActiveView] = useState<'editor' | 'preview'>('editor')
 
     useEffect(() => {
         if (selectedThemeId) {
@@ -198,11 +199,35 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
     } as React.CSSProperties
 
     return (
-        <div className="bg-pv-dark-100">
-            <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-8rem)] p-4">
+        <div className="flex flex-col h-full flex-1 min-h-0">
+            {/* Mobile View Toggle - Visible only < 1024px */}
+            <div className="flex lg:hidden items-center justify-center gap-2 p-4 bg-pv-dark-0 border-b border-white-0/5 shrink-0">
+                <div className="flex items-center gap-2 p-1 bg-pv-dark-200 rounded-xl">
+                    <button
+                        onClick={() => setActiveView('editor')}
+                        className={`px-6 py-2 text-[11px] font-pv-bold uppercase tracking-widest rounded-lg transition-all ${activeView === 'editor'
+                            ? 'bg-pv-gradient-soft text-white-0 shadow-lg'
+                            : 'text-white-0/40 hover:text-white-0/60'
+                            }`}
+                    >
+                        Éditeur
+                    </button>
+                    <button
+                        onClick={() => setActiveView('preview')}
+                        className={`px-6 py-2 text-[11px] font-pv-bold uppercase tracking-widest rounded-lg transition-all ${activeView === 'preview'
+                            ? 'bg-pv-gradient-soft text-white-0 shadow-lg'
+                            : 'text-white-0/40 hover:text-white-0/60'
+                            }`}
+                    >
+                        Preview
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-8 h-full p-4 lg:p-0 min-h-0 overflow-hidden">
                 {/* Left: Controls */}
-                <div className="w-full lg:w-1/2 flex flex-col gap-6 overflow-y-auto pr-2 pb-10">
-                    <div className="bg-pv-dark-200 p-6 rounded-xl shadow-sm border border-white/10 text-pv-white-0">
+                <div className={`w-full lg:w-1/2 flex flex-col gap-6 overflow-y-auto lg:pr-6 pb-20 ${activeView === 'editor' ? 'flex' : 'hidden lg:flex'}`}>
+                    <div className="bg-pv-dark-200 p-6 rounded-2xl shadow-sm border border-white-0/5 text-pv-white-0">
                         <div className="mb-6">
                             <label className="block font-pv-jost font-bold text-[12px] uppercase tracking-wider text-pv-white-0/70 mb-2">Sélectionner un thème</label>
                             <select
@@ -450,7 +475,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                 </div>
 
                 {/* Right: Preview (Fixed Aspect Ratio) */}
-                <div className="bg-pv-dark-200 w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 relative flex items-center justify-center rounded-xl">
+                <div className={`bg-pv-dark-200 w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 relative flex items-center justify-center rounded-2xl border border-white-0/5 ${activeView === 'preview' ? 'flex' : 'hidden lg:flex'}`}>
                     <div
                         className="w-full max-w-[400px] min-w-[360px] aspect-[2/3] shadow-2xl rounded-[30px] overflow-y-auto scrollbar-hide border-8 border-gray-900 transition-all duration-300 p-8"
                         style={previewStyle}

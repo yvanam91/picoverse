@@ -63,7 +63,7 @@ export default async function EditorPage({
     return (
         <div className="min-h-screen pv-dark-100 flex flex-col h-screen overflow-hidden">
             <header className="pv-dark-0 text-pv-white-0 z-10 shrink-0">
-                <div className="mx-auto w-full px-4 py-pv-20 sm:px-6 lg:px-8 border-b border-gray-100/10">
+                <div className="mx-auto w-full pl-16 pr-4 py-pv-20 md:px-8 border-b border-gray-100/10">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <Link

@@ -46,13 +46,13 @@ export default function AccountFormClient({ initialProfile }: AccountFormClientP
         <>
             <form action={formAction} className="space-y-6">
                 {/* Information Personnelles */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200">
-                        <h2 className="text-lg font-medium text-gray-900">Informations Personnelles</h2>
+                <div className="bg-pv-dark-0 rounded-2xl border border-white-0/5 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-white-0/5 bg-white-0/[0.02]">
+                        <h2 className="text-lg font-pv-bold text-white-0 uppercase tracking-widest text-xs">Informations Personnelles</h2>
                     </div>
                     <div className="p-6 space-y-6">
                         <div>
-                            <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">Nom d'affichage</label>
+                            <label htmlFor="full_name" className="block text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest mb-2">Nom d&apos;affichage</label>
                             <div className="mt-1">
                                 <input
                                     id="full_name"
@@ -61,35 +61,35 @@ export default function AccountFormClient({ initialProfile }: AccountFormClientP
                                     maxLength={20}
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                                    className="block w-full bg-white-0/5 border border-white-0/10 rounded-xl p-3 text-white-0 placeholder:text-white-0/20 focus:outline-none focus:border-pv-brand-500 transition-colors text-sm font-pv-regular"
                                     placeholder="Votre nom"
                                 />
-                                <div className="mt-1 flex justify-end">
-                                    <span className="text-xs text-gray-400">{fullName.length}/20</span>
+                                <div className="mt-2 flex justify-end">
+                                    <span className="text-[10px] text-white-0/30 font-pv-medium">{fullName.length}/20</span>
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Slug Picoverse</label>
+                            <label className="block text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest mb-2">Slug Picoverse</label>
                             <div className="mt-1">
                                 <input
                                     type="text"
                                     disabled
                                     value={initialProfile.username}
-                                    className="block w-full rounded-md border-gray-300 bg-gray-50 text-gray-500 shadow-sm sm:text-sm px-3 py-2 border cursor-not-allowed"
+                                    className="block w-full bg-white-0/[0.02] border border-white-0/10 rounded-xl p-3 text-white-0/40 text-sm font-pv-regular cursor-not-allowed"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Email</label>
+                            <label className="block text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest mb-2">Email</label>
                             <div className="mt-1">
                                 <input
                                     type="text"
                                     disabled
                                     value={initialProfile.email}
-                                    className="block w-full rounded-md border-gray-300 bg-gray-50 text-gray-500 shadow-sm sm:text-sm px-3 py-2 border cursor-not-allowed"
+                                    className="block w-full bg-white-0/[0.02] border border-white-0/10 rounded-xl p-3 text-white-0/40 text-sm font-pv-regular cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -97,47 +97,47 @@ export default function AccountFormClient({ initialProfile }: AccountFormClientP
                 </div>
 
                 {/* Sécurité */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2">
-                        <Lock className="h-5 w-5 text-gray-400" />
-                        <h2 className="text-lg font-medium text-gray-900">Sécurité</h2>
+                <div className="bg-pv-dark-0 rounded-2xl border border-white-0/5 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-white-0/5 bg-white-0/[0.02] flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-white-0/40" />
+                        <h2 className="text-lg font-pv-bold text-white-0 uppercase tracking-widest text-xs">Sécurité</h2>
                     </div>
                     <div className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
-                                <div className="mt-1 text-sm text-gray-500 font-mono tracking-widest">
+                                <label className="block text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest mb-1">Mot de passe</label>
+                                <div className="text-sm text-white-0 font-mono tracking-widest">
                                     ••••••••••••
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setIsPasswordModalOpen(true)}
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="px-4 py-2 bg-white-0/5 text-white-0 font-pv-bold text-sm rounded-xl border border-white-0/10 hover:bg-white-0/10 transition-all"
                             >
-                                Changer
+                                Modifier
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Zone de Danger */}
-                <div className="bg-red-50 rounded-lg border border-red-200 shadow-sm overflow-hidden mt-8">
-                    <div className="px-6 py-4 border-b border-red-200 flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-red-500" />
-                        <h2 className="text-lg font-medium text-red-900">Zone de Danger</h2>
+                <div className="bg-red-500/5 rounded-2xl border border-red-500/20 shadow-sm overflow-hidden mt-8 transition-colors hover:bg-red-500/10">
+                    <div className="px-6 py-4 border-b border-red-500/10 bg-red-500/[0.02] flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        <h2 className="text-lg font-pv-bold text-red-500 uppercase tracking-widest text-xs">Zone de Danger</h2>
                     </div>
                     <div className="p-6">
-                        <p className="text-sm text-red-700 mb-4">
-                            Une fois supprimé, votre profil et tous vos projets Picoverse seront effacés définitivement.
+                        <p className="text-sm text-white-0/60 font-pv-regular mb-6 italic leading-relaxed">
+                            Une fois supprimé, votre profil et tous vos projets Picoverse seront effacés définitivement. Cette action est irréversible.
                         </p>
                         <div className="flex justify-end">
                             <button
                                 type="button"
                                 onClick={() => setIsDeleteModalOpen(true)}
-                                className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                className="px-5 py-2.5 bg-red-500/10 text-red-500 font-pv-bold text-sm rounded-xl border border-red-500/20 hover:bg-red-500 hover:text-white transition-all shadow-sm"
                             >
-                                Supprimer le compte
+                                Supprimer mon compte
                             </button>
                         </div>
                     </div>
@@ -148,15 +148,10 @@ export default function AccountFormClient({ initialProfile }: AccountFormClientP
                     <button
                         type="submit"
                         disabled={!isDirty || isPending}
-                        className={`
-                            inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors
-                            ${(!isDirty || isPending)
-                                ? 'bg-gray-300 cursor-not-allowed hover:bg-gray-300'
-                                : 'bg-[#7C3AED] hover:bg-[#6D28D9]'}
-                        `}
+                        className={`pv-primary disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                         {isPending && <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />}
-                        Confirmer les changements
+                        Mettre à jour mon profil
                     </button>
                 </div>
             </form>

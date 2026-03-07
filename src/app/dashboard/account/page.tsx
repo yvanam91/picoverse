@@ -25,9 +25,9 @@ export default async function AccountPage() {
     const email = user.email || ''
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-pv-dark-100">
             <header className="bg-pv-dark-0 text-white-0">
-                <div className="mx-auto max-w-7xl px-4 py-pv-20 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl pl-16 pr-4 py-pv-20 md:px-8">
                     <div className="flex items-center gap-4">
                         <div className="h-12 w-12 rounded-full bg-pv-dark-100 flex items-center justify-center text-white-0">
                             <User className="h-6 w-6" />

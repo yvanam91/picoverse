@@ -1,8 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import { CreateProjectModal } from './CreateProjectModal'
-import { Folder } from 'lucide-react'
+import { Folder, LogOut } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import type { Project } from '@/types/database'
+import { signOut } from '@/app/auth/actions'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -25,17 +26,31 @@ export default async function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-            <div className="text-center py-12 rounded-lg border-2 border-dashed border-gray-300 p-12 bg-white">
-                <Folder className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">
-                    Bienvenue sur Picoverse
+        <div className="min-h-screen bg-pv-dark-100 flex flex-col justify-center items-center p-4">
+            <div className="text-center py-16 px-8 sm:px-12 bg-pv-dark-0 border border-white-0/10 rounded-[32px] shadow-2xl max-w-md w-full animate-in fade-in zoom-in duration-500">
+                <div className="h-20 w-20 bg-pv-gradient-soft rounded-3xl mx-auto flex items-center justify-center mb-8 shadow-lg shadow-pv-brand-500/10 scale-110">
+                    <Folder className="h-10 w-10 text-white-0" />
+                </div>
+
+                <h3 className="text-2xl font-pv-jost font-pv-bold text-white-0 uppercase tracking-widest">
+                    Bienvenue
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                    Créez votre premier projet pour commencer.
+                <p className="mt-4 text-sm text-white-0/50 font-pv-regular italic leading-relaxed">
+                    Créez votre premier projet pour commencer l&apos;aventure Picoverse.
                 </p>
-                <div className="mt-6">
+
+                <div className="mt-10 space-y-4">
                     <CreateProjectModal />
+
+                    <form action={signOut}>
+                        <button
+                            type="submit"
+                            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-pv-bold text-white-0/30 hover:text-red-400 hover:bg-red-400/5 transition-all uppercase tracking-widest"
+                        >
+                            <LogOut className="h-3 w-3" />
+                            Se déconnecter
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

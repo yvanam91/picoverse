@@ -13,3 +13,15 @@ export const getBoxShadow = (style: string, color: string, opacity: number) => {
     const blur = style === 'soft' ? '4px' : '0px';
     return `4px 4px ${blur} 0px ${rgba}`;
 }
+
+export function normalizeSlug(text: string): string {
+    return text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}

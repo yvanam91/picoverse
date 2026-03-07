@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, X, Loader2 } from 'lucide-react'
-import { createPage } from '../../app/dashboard/actions'
+import { createPage, getPlanUsage } from '../../app/dashboard/actions'
 import { slugify } from '@/utils/slugify'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import type { Page } from '@/types/database'
 
@@ -25,6 +26,9 @@ export function CreatePageModal({ projectId, onSuccess, children }: CreatePageMo
     const [description, setDescription] = useState('')
     const [isSlugEdited, setIsSlugEdited] = useState(false)
 
+    const { data: planUsage } = useSWR(isOpen ? `plan-usage-${projectId}` : null, () => getPlanUsage(projectId))
+    const isLimitReached = planUsage && planUsage.pages.current >= planUsage.pages.max
+
     useEffect(() => {
         if (!isSlugEdited) {
             setSlug(slugify(title))
@@ -39,7 +43,7 @@ export function CreatePageModal({ projectId, onSuccess, children }: CreatePageMo
 
             if (result?.error) {
                 setError(result.error)
-                toast.error(result.error)
+                // toast.error(result.error) // Remove redundant toast if error is shown in UI
                 return
             }
 
@@ -81,123 +85,115 @@ export function CreatePageModal({ projectId, onSuccess, children }: CreatePageMo
             )}
 
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-white rounded-xl shadow-xl ring-1 ring-black/5 p-6 animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="w-full max-w-md bg-pv-dark-0 rounded-2xl border border-white-0/10 shadow-2xl p-8 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-xl font-pv-jost font-pv-bold text-white-0 uppercase tracking-wide">
                                 Nouvelle page
                             </h3>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="text-gray-400 hover:text-gray-500 transition-colors"
+                                className="text-white-0/40 hover:text-white-0 transition-colors"
                             >
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        <form action={onSubmit} className="space-y-4">
-                            <div>
-                                <label
-                                    htmlFor="title"
-                                    className="block text-sm font-medium text-gray-700"
+                        {isLimitReached ? (
+                            <div className="space-y-6">
+                                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center">
+                                    <p className="text-sm text-amber-500 font-pv-medium">
+                                        Limite de pages atteinte ({planUsage?.pages.max}/{planUsage?.pages.max}).
+                                    </p>
+                                    <p className="mt-2 text-xs text-white-0/60 font-pv-regular italic">
+                                        Passez au plan supérieur pour débloquer plus de pages.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="w-full py-3 rounded-xl bg-white-0/5 text-white-0 font-pv-bold text-sm hover:bg-white-0/10 transition-all"
                                 >
-                                    Titre de la page
-                                </label>
-                                <input
-                                    type="text"
-                                    name="title"
-                                    id="title"
-                                    required
-                                    maxLength={50}
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="Ma Super Page"
-                                    className="mt-1 block w-full rounded-md border-gray-300 text-black placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none sm:text-sm border p-2"
-                                />
+                                    Fermer
+                                </button>
                             </div>
-
-                            <div>
-                                <label
-                                    htmlFor="slug"
-                                    className="block text-sm font-medium text-gray-700"
-                                >
-                                    Slug (URL)
-                                </label>
-                                <div className="mt-1 flex rounded-md shadow-sm">
-                                    <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                                        /
-                                    </span>
+                        ) : (
+                            <form action={onSubmit} className="space-y-6">
+                                <div>
+                                    <label
+                                        htmlFor="title"
+                                        className="block text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest mb-2"
+                                    >
+                                        Titre de la page
+                                    </label>
                                     <input
                                         type="text"
-                                        name="slug"
-                                        id="slug"
+                                        name="title"
+                                        id="title"
                                         required
                                         maxLength={50}
-                                        value={slug}
-                                        onChange={(e) => {
-                                            setSlug(e.target.value)
-                                            setIsSlugEdited(true)
-                                        }}
-                                        placeholder="ma-super-page"
-                                        className="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 text-black placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none sm:text-sm border p-2"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="Ex: Ma Boutique"
+                                        className="w-full bg-white-0/5 border border-white-0/10 rounded-xl p-3 text-white-0 placeholder:text-white-0/20 focus:outline-none focus:border-pv-brand-500 transition-colors text-sm font-pv-regular"
                                     />
                                 </div>
-                                <p className="mt-1 text-xs text-gray-500">
-                                    Utilisé dans l'URL. Minuscules, chiffres et tirets uniquement.
-                                </p>
-                            </div>
 
-                            <div>
-                                <label
-                                    htmlFor="description"
-                                    className="block text-sm font-medium text-gray-700"
-                                >
-                                    Description
-                                </label>
-                                <textarea
-                                    name="description"
-                                    id="description"
-                                    rows={3}
-                                    maxLength={200}
-                                    placeholder="Une brève description de votre page..."
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 text-black placeholder:text-gray-400 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none sm:text-sm border p-2"
-                                />
-                                <div className="mt-1 text-right">
-                                    <span className={`text-xs ${description.length >= 180 ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                                        {description.length}/200
-                                    </span>
+                                <div>
+                                    <label
+                                        htmlFor="slug"
+                                        className="block text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest mb-2"
+                                    >
+                                        URL de la page
+                                    </label>
+                                    <div className="flex bg-white-0/5 border border-white-0/10 rounded-xl overflow-hidden focus-within:border-pv-brand-500 transition-colors">
+                                        <span className="px-3 py-3 text-white-0/30 font-pv-medium text-sm border-r border-white-0/10">
+                                            /
+                                        </span>
+                                        <input
+                                            type="text"
+                                            name="slug"
+                                            id="slug"
+                                            required
+                                            maxLength={50}
+                                            value={slug}
+                                            onChange={(e) => {
+                                                setSlug(e.target.value)
+                                                setIsSlugEdited(true)
+                                            }}
+                                            placeholder="ma-boutique"
+                                            className="flex-1 bg-transparent p-3 text-white-0 placeholder:text-white-0/20 focus:outline-none text-sm font-pv-regular"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            {error && (
-                                <div className="rounded-md bg-red-50 p-3">
-                                    <p className="text-sm text-red-700">{error}</p>
+                                {error && (
+                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                        <p className="text-xs text-red-500 font-pv-medium text-center">{error}</p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-4 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsOpen(false)}
+                                        className="flex-1 py-3 rounded-xl bg-white-0/5 text-white-0/60 font-pv-bold text-sm hover:bg-white-0/10 hover:text-white-0 transition-all"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="flex-1 py-3 rounded-xl bg-pv-brand-500 text-white-0 font-pv-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center"
+                                    >
+                                        {loading ? (
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            'Créer la page'
+                                        )}
+                                    </button>
                                 </div>
-                            )}
-
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsOpen(false)}
-                                    className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
-                                >
-                                    {loading ? (
-                                        <Loader2 className="h-5 w-5 animate-spin" />
-                                    ) : (
-                                        'Créer'
-                                    )}
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        )}
                     </div>
                 </div>
             )}

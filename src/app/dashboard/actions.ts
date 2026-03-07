@@ -3,7 +3,9 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { PLAN_LIMITS, getPlanLimits } from '@/utils/plan-limits'
 import type { Block, PageConfig, Project, BlockType, Theme, Page } from '@/types/database'
+import { normalizeSlug } from '@/lib/utils'
 
 export async function deleteProject(projectId: string) {
     console.log('--- Attempting to delete project:', projectId)
@@ -67,13 +69,7 @@ export async function updateProjectName(projectId: string, newName: string) {
         return { error: 'Le nom du projet ne peut pas être vide' }
     }
 
-    const slug = newName
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Supprime les diacritiques
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '') // Ne garde que l'essentiel
-        .replace(/\s+/g, '-')
-        .trim()
+    const slug = normalizeSlug(newName)
 
     console.log(`Tentative d'update pour ID: ${projectId} vers Slug: ${slug}`)
 
@@ -81,16 +77,20 @@ export async function updateProjectName(projectId: string, newName: string) {
         return { error: 'Le nom génère un slug invalide' }
     }
 
-    // Check for slug uniqueness (excluding current project)
+    // Check for slug or name uniqueness (excluding current project)
     const { data: existing } = await supabase
         .from('projects')
-        .select('id')
-        .eq('slug', slug)
-        .neq('id', projectId) // Don't block if we keep same slug
+        .select('id, name')
+        .or(`slug.eq.${slug},name.ilike.${newName.trim()}`)
+        .eq('user_id', user.id)
+        .neq('id', projectId)
         .maybeSingle()
 
     if (existing) {
-        return { error: 'Ce nom de projet est déjà pris (slug existant)' }
+        if (existing.name.toLowerCase() === newName.trim().toLowerCase()) {
+            return { error: 'Vous avez déjà un projet avec ce nom.' }
+        }
+        return { error: 'Ce nom de projet génère un lien (slug) déjà utilisé.' }
     }
 
     const { data, error } = await supabase
@@ -124,24 +124,18 @@ export async function checkProjectNameAvailability(name: string, currentProjectI
 
     if (!name || name.trim().length === 0) return { available: false }
 
-    const slug = name.toLowerCase()
-        .normalize('NFD') // Split accents from letters
-        .replace(/[\u0300-\u036f]/g, '') // Remove accents
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
-        .replace(/\s+/g, '-')     // Replace spaces with hyphens
-        .replace(/--+/g, '-')     // Replace multiple hyphens
-        .trim()
+    const slug = normalizeSlug(name)
 
     const { data } = await supabase
         .from('projects')
-        .select('id')
-        .eq('slug', slug)
+        .select('id, name')
+        .or(`slug.eq.${slug},name.ilike.${name.trim()}`)
         .eq('user_id', user.id)
         .neq('id', currentProjectId)
-        .single()
+        .maybeSingle()
 
     if (data) {
-        return { available: false, error: 'Vous avez déjà un projet portant ce nom.' }
+        return { available: false, error: 'Vous avez déjà un projet portant ce nom ou générant ce lien.' }
     }
 
     return { available: true }
@@ -159,27 +153,60 @@ export async function createProject(formData: FormData) {
         redirect('/login')
     }
 
+    // --- PLAN LIMIT CHECK (DYNAMIC) ---
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', user.id)
+        .single()
+
+    const planName = profile?.plan || 'free'
+    const { data: planConfig } = await supabase
+        .from('plan_config')
+        .select('*')
+        .eq('plan_name', planName)
+        .maybeSingle()
+
+    const maxProjects = planConfig?.max_projects ?? PLAN_LIMITS.free.maxProjects
+
+    const { count: projectCount } = await supabase
+        .from('projects')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+    if (projectCount !== null && projectCount >= maxProjects) {
+        return { error: `Limite de votre plan ${planName} atteinte (${maxProjects} projet). Passez au plan Pro pour créer plus de contenu.` }
+    }
+    // ------------------------
+
+    if (!name || name.trim().length === 0) {
+        return { error: 'Le nom du projet est requis' }
+    }
+
     console.log('Inserting project for user:', user.id)
 
-    const slug = name.toLowerCase()
-        .replace(/[^\w\s-]/g, '') // Remove special chars
-        .replace(/\s+/g, '-')     // Replace spaces with hyphens
-        .replace(/--+/g, '-')     // Replace multiple hyphens
-        .trim()
+    const slug = normalizeSlug(name)
+
+    if (!slug) {
+        return { error: 'Le nom du projet est invalide' }
+    }
 
     // Ensure slug is unique if needed, but for now simple generation
     // Ideally we should check existence or let DB handle unique constraint error
 
-    // Check for slug uniqueness PER USER
+    // Check for slug or name uniqueness PER USER
     const { data: existingProject } = await supabase
         .from('projects')
-        .select('id')
-        .eq('slug', slug)
+        .select('id, name')
+        .or(`slug.eq.${slug},name.ilike.${name.trim()}`)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (existingProject) {
-        return { error: 'Vous avez déjà un projet avec ce nom.' }
+        if (existingProject.name.toLowerCase() === name.trim().toLowerCase()) {
+            return { error: 'Vous avez déjà un projet avec ce nom.' }
+        }
+        return { error: 'Ce nom de projet génère un lien (slug) déjà utilisé.' }
     }
 
     // Ensure theme_id is associated (per user rules) - verified later in flow by creating default theme
@@ -238,69 +265,102 @@ export async function createProject(formData: FormData) {
 }
 
 export async function createPage(projectId: string, formData: FormData) {
-    const supabase = await createClient()
-    const title = formData.get('title') as string
-    const slug = formData.get('slug') as string
-    const description = formData.get('description') as string
+    try {
+        const supabase = await createClient()
+        const title = formData.get('title') as string
+        const slug = formData.get('slug') as string
+        const description = (formData.get('description') as string) || ''
 
-    if (!title || !slug) {
-        throw new Error('Le titre et le slug sont requis')
-    }
+        if (!title || !slug) {
+            return { error: 'Le titre et le slug sont requis' }
+        }
 
-    if (title.length > 50 || slug.length > 50) {
-        return { error: 'Titre ou slug trop long (max 50 caractères)' }
-    }
+        if (title.length > 50 || slug.length > 50) {
+            return { error: 'Titre ou slug trop long (max 50 caractères)' }
+        }
 
-    if (description.length > 200) {
-        return { error: 'La description ne doit pas dépasser 200 caractères' }
-    }
+        if (description.length > 200) {
+            return { error: 'La description ne doit pas dépasser 200 caractères' }
+        }
 
-    // Basic validation for slug
-    const slugRegex = /^[a-z0-9-]+$/
-    if (!slugRegex.test(slug)) {
-        throw new Error('Le slug ne doit contenir que des minuscules, des chiffres et des tirets')
-    }
+        // Basic validation for slug
+        const slugRegex = /^[a-z0-9-]+$/
+        if (!slugRegex.test(slug)) {
+            return { error: 'Le slug ne doit contenir que des minuscules, des chiffres et des tirets' }
+        }
 
-    // 1. Get Project Default Theme
-    const { data: project } = await supabase
-        .from('projects')
-        .select('default_theme_id, slug')
-        .eq('id', projectId)
-        .single()
+        // --- PLAN LIMIT CHECK (DYNAMIC) ---
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) redirect('/login')
 
-    // 2. Get Theme Config (Inheritance)
-    let themeConfig = {}
-    if (project?.default_theme_id) {
-        const { data: theme } = await supabase
-            .from('themes')
-            .select('config')
-            .eq('id', project.default_theme_id)
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('plan')
+            .eq('id', user.id)
             .single()
-        themeConfig = theme?.config || {}
+
+        const planName = profile?.plan || 'free'
+        const { data: planConfig } = await supabase
+            .from('plan_config')
+            .select('*')
+            .eq('plan_name', planName)
+            .maybeSingle()
+
+        const maxPages = planConfig?.max_pages_per_project ?? PLAN_LIMITS.free.maxPagesPerProject
+
+        const { count: pageCount } = await supabase
+            .from('pages')
+            .select('*', { count: 'exact', head: true })
+            .eq('project_id', projectId)
+
+        if (pageCount !== null && pageCount >= maxPages) {
+            return { error: `Limite de pages atteinte pour ce projet (${maxPages} pages). Passez au niveau supérieur pour plus de flexibilité.` }
+        }  // ------------------------
+
+        // 1. Get Project Default Theme
+        const { data: project } = await supabase
+            .from('projects')
+            .select('default_theme_id, slug')
+            .eq('id', projectId)
+            .single()
+
+        // 2. Get Theme Config (Inheritance)
+        let themeConfig = {}
+        if (project?.default_theme_id) {
+            const { data: theme } = await supabase
+                .from('themes')
+                .select('config')
+                .eq('id', project.default_theme_id)
+                .single()
+            themeConfig = theme?.config || {}
+        }
+
+        console.log('--- Creating Page ---')
+        console.log('Project ID:', projectId)
+        console.log('Inheriting Theme ID:', project?.default_theme_id)
+
+        const { data, error } = await supabase.from('pages').insert({
+            project_id: projectId,
+            title,
+            slug,
+            description,
+            config: themeConfig, // Inject inherited config
+            theme_id: project?.default_theme_id // Link to theme
+        }).select().single()
+
+        if (error) {
+            return { error: error.message }
+        }
+
+        if (project?.slug) {
+            revalidatePath(`/dashboard/${project.slug}`)
+        }
+        revalidatePath(`/dashboard/${projectId}`) // Keep ID for safety
+        return { data }
+    } catch (e: any) {
+        console.error('CreatePage Error:', e)
+        return { error: e.message || 'Erreur lors de la création de la page' }
     }
-
-    console.log('--- Creating Page ---')
-    console.log('Project ID:', projectId)
-    console.log('Inheriting Theme ID:', project?.default_theme_id)
-
-    const { data, error } = await supabase.from('pages').insert({
-        project_id: projectId,
-        title,
-        slug,
-        description,
-        config: themeConfig, // Inject inherited config
-        theme_id: project?.default_theme_id // Link to theme
-    }).select().single()
-
-    if (error) {
-        return { error: error.message }
-    }
-
-    if (project?.slug) {
-        revalidatePath(`/dashboard/${project.slug}`)
-    }
-    revalidatePath(`/dashboard/${projectId}`) // Keep ID for safety
-    return { data }
 }
 
 export async function addBlock(pageId: string) {
@@ -603,7 +663,7 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
 
 export async function deletePage(projectId: string, pageId: string) {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } = {} } = await supabase.auth.getUser()
 
     if (!user) {
         return { error: 'Unauthorized' }
@@ -814,5 +874,52 @@ export async function updateProjectContent(projectId: string, pageId: string, bl
     } catch (error: any) {
         console.error('Failed to update project content:', error)
         return { error: error.message || 'Failed to update content' }
+    }
+}
+export async function getPlanUsage(projectId?: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', user.id)
+        .single()
+
+    const planName = profile?.plan || 'free'
+    const { data: planConfig } = await supabase
+        .from('plan_config')
+        .select('*')
+        .eq('plan_name', planName)
+        .maybeSingle()
+
+    const maxProjects = planConfig?.max_projects ?? PLAN_LIMITS.free.maxProjects
+    const maxPages = planConfig?.max_pages_per_project ?? PLAN_LIMITS.free.maxPagesPerProject
+
+    const { count: projectsCount } = await supabase
+        .from('projects')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+    let pagesCount = 0
+    if (projectId) {
+        const { count } = await supabase
+            .from('pages')
+            .select('*', { count: 'exact', head: true })
+            .eq('project_id', projectId)
+        pagesCount = count || 0
+    }
+
+    return {
+        plan: planName,
+        projects: {
+            current: projectsCount || 0,
+            max: maxProjects
+        },
+        pages: {
+            current: pagesCount,
+            max: maxPages
+        }
     }
 }
