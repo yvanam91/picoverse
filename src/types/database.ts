@@ -8,7 +8,7 @@ export type Profile = {
 }
 
 
-export type BlockType = 'text' | 'image' | 'video' | 'button' | 'hero' | 'link' | 'double-link' | 'file' | 'header' | 'social_grid' | 'separator' | 'title' | 'embed'
+export type BlockType = 'text' | 'image' | 'video' | 'button' | 'hero' | 'link' | 'secondary-link' | 'double-link' | 'file' | 'header' | 'social_grid' | 'separator' | 'title' | 'embed'
 
 export interface Block {
     id: string
@@ -23,6 +23,7 @@ export interface ThemeConfig {
     // Phase 1 & 3 Structure
     colors?: {
         background: string
+        outerBackground: string
         primary: string
         secondary: string
         text: string

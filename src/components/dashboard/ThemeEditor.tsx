@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import type { PageConfig, Theme } from '@/types/database'
 import { saveTheme, updateTheme, applyThemeToProject, deleteTheme } from '@/app/dashboard/actions'
 import { toast } from 'sonner'
-import { Loader2, Check, Save, Trash2 } from 'lucide-react'
+import { Loader2, Check, Save, Trash2, Globe, Twitter, Instagram, Linkedin } from 'lucide-react'
 import { getBoxShadow } from '@/lib/utils'
 import { fontMap } from '@/styles/fonts'
 
@@ -37,6 +37,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
             ...baseConfig,
             colors: {
                 background: baseConfig.colors?.background || baseConfig.backgroundColor || '#ffffff',
+                outerBackground: baseConfig.colors?.outerBackground || '#0a0a0a',
                 primary: baseConfig.colors?.primary || baseConfig.buttonColor || '#000000',
                 secondary: baseConfig.colors?.secondary || baseConfig.secondaryColor || '#e5e7eb',
                 text: baseConfig.colors?.text || baseConfig.textColor || '#1f2937',
@@ -183,6 +184,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
 
     const previewStyle = {
         '--pico-bg': config.colors?.background || '#ffffff',
+        '--pico-outer-bg': config.colors?.outerBackground || '#0a0a0a',
         '--pico-primary': config.colors?.primary || '#000000',
         '--pico-secondary': config.colors?.secondary || '#e5e7eb',
         '--pico-text': config.colors?.text || '#1f2937',
@@ -194,8 +196,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
         '--pico-shadow': getBoxShadow(config.shadows?.style || 'none', config.colors?.secondary || '#e5e7eb', config.shadows?.opacity ?? 0.5),
         '--pico-font': fontMap[config.typography?.fontFamily || 'inter'] || 'var(--font-inter)',
         fontFamily: 'var(--pico-font)',
-        backgroundColor: 'var(--pico-bg)',
-        color: 'var(--pico-text)',
+        backgroundColor: 'var(--pico-outer-bg)', // Impact outer background
     } as React.CSSProperties
 
     return (
@@ -287,6 +288,25 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="text"
+                                                value={config.colors?.outerBackground}
+                                                onChange={(e) => handleColorChange('outerBackground', e.target.value)}
+                                                className="w-20 bg-transparent border-b border-white/10 text-pv-white-0 text-xs font-mono uppercase focus:border-pv-brand-500 outline-none text-right"
+                                            />
+                                            <div className="relative h-8 w-14 rounded overflow-hidden shadow-inner border border-white/5">
+                                                <input
+                                                    type="color"
+                                                    value={normalizeHex(config.colors?.outerBackground || '#0a0a0a')}
+                                                    onChange={(e) => handleColorChange('outerBackground', e.target.value)}
+                                                    className="absolute -inset-1 h-[150%] w-[150%] cursor-pointer border-0 p-0 bg-transparent"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-pv-jost font-normal text-pv-12 text-pv-white-0/80">Page</span>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="text"
                                                 value={config.colors?.background}
                                                 onChange={(e) => handleColorChange('background', e.target.value)}
                                                 className="w-20 bg-transparent border-b border-white/10 text-pv-white-0 text-xs font-mono uppercase focus:border-pv-brand-500 outline-none text-right"
@@ -340,7 +360,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="font-pv-jost font-normal text-pv-12 text-pv-white-0/80">Secondaire (Diviseurs)</span>
+                                        <span className="font-pv-jost font-normal text-pv-12 text-pv-white-0/80">Secondaire</span>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="text"
@@ -380,7 +400,33 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                 </div>
                             </div>
 
-                            {/* Borders & Radius */}
+                            {/* Shadows Portées FIRST */}
+                            <div className="space-y-4 pt-4 border-t border-white/5">
+                                <h3 className="font-pv-jost font-bold text-[12px] uppercase tracking-wider text-pv-white-0">Ombres Portées</h3>
+                                <div className="space-y-2">
+                                    <label className="font-pv-jost font-normal text-pv-12 text-pv-white-0/70">Style d'ombre</label>
+                                    <select
+                                        className="w-full rounded-md border-white/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 text-pv-16 font-pv-jost p-2 border text-pv-white-0"
+                                        value={config.shadows?.style || 'none'}
+                                        onChange={(e) => handleShadowChange('style', e.target.value)}
+                                    >
+                                        <option value="none">Aucune</option>
+                                        <option value="hard">Hard (Rétro)</option>
+                                        <option value="soft">Soft (Moderne)</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="font-pv-jost font-normal text-pv-12 text-pv-white-0/70">Opacité ({Math.round((config.shadows?.opacity || 0) * 100)}%)</label>
+                                    <input
+                                        type="range" min="0" max="1" step="0.1"
+                                        className="w-full accent-pv-brand-500"
+                                        value={config.shadows?.opacity || 0}
+                                        onChange={(e) => handleShadowChange('opacity', parseFloat(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Borders & Radius SECOND */}
                             <div>
                                 <h3 className="font-pv-jost font-bold text-[12px] uppercase tracking-wider text-pv-white-0 mb-3">Bordures & Formes</h3>
                                 <div className="space-y-4">
@@ -412,31 +458,6 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                             <option value="4px">Épaisse (4px)</option>
                                         </select>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 pt-4 border-t border-white/5">
-                                <h3 className="font-pv-jost font-bold text-[12px] uppercase tracking-wider text-pv-white-0">Ombres Portées</h3>
-                                <div className="space-y-2">
-                                    <label className="font-pv-jost font-normal text-pv-12 text-pv-white-0/70">Style d'ombre</label>
-                                    <select
-                                        className="w-full rounded-md border-white/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 text-pv-16 font-pv-jost p-2 border text-pv-white-0"
-                                        value={config.shadows?.style || 'none'}
-                                        onChange={(e) => handleShadowChange('style', e.target.value)}
-                                    >
-                                        <option value="none">Aucune</option>
-                                        <option value="hard">Hard (Rétro)</option>
-                                        <option value="soft">Soft (Moderne)</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="font-pv-jost font-normal text-pv-12 text-pv-white-0/70">Opacité ({Math.round((config.shadows?.opacity || 0) * 100)}%)</label>
-                                    <input
-                                        type="range" min="0" max="1" step="0.1"
-                                        className="w-full accent-pv-brand-500"
-                                        value={config.shadows?.opacity || 0}
-                                        onChange={(e) => handleShadowChange('opacity', parseFloat(e.target.value))}
-                                    />
                                 </div>
                             </div>
                         </div>
@@ -477,23 +498,32 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                 {/* Right: Preview (Fixed Aspect Ratio) */}
                 <div className={`bg-pv-dark-200 w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 relative flex items-center justify-center rounded-2xl border border-white-0/5 ${activeView === 'preview' ? 'flex' : 'hidden lg:flex'}`}>
                     <div
-                        className="w-full max-w-[400px] min-w-[360px] aspect-[2/3] shadow-2xl rounded-[30px] overflow-y-auto scrollbar-hide border-8 border-gray-900 transition-all duration-300 p-8"
-                        style={previewStyle}
+                        className="w-full max-w-[400px] min-w-[360px] aspect-[2/3] shadow-2xl transition-all duration-300 p-8 pt-10 overflow-y-auto scrollbar-hide border-gray-900"
+                        style={{
+                            ...previewStyle,
+                            backgroundColor: 'var(--pico-bg)',
+                            color: 'var(--pico-text)', // Fix text color
+                            borderRadius: `calc(${config.borders?.radius || '8px'} * 2)`,
+                            borderWidth: config.borders?.width || '0px',
+                            borderColor: 'var(--pico-secondary)',
+                            borderStyle: config.borders?.style || 'solid',
+                            boxShadow: 'var(--pico-shadow)'
+                        }}
                     >
                         {/* Content Skeleton matches PublicPage but simpler */}
-                        <div className="flex flex-col items-center text-center space-y-6 pt-10">
+                        <div className="flex flex-col items-center text-center space-y-6">
                             {/* Profile Image Mock */}
                             <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-sm mb-2"></div>
 
                             {/* Title */}
                             <div>
                                 <h2 className="text-2xl font-bold mb-1">Mon Super Projet</h2>
-                                <p className="opacity-80">@mon_handle</p>
+                                <p className="opacity-60 text-xs">@mon_handle</p>
                             </div>
 
                             {/* Separator */}
                             <hr
-                                className="w-2/3 opacity-50"
+                                className="w-2/3 opacity-30"
                                 style={{
                                     borderColor: 'var(--pico-secondary)',
                                     borderStyle: 'var(--pico-divider-style)',
@@ -502,7 +532,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                             />
 
                             {/* Text */}
-                            <p className="opacity-90 leading-relaxed px-4">
+                            <p className="opacity-90 leading-relaxed px-4 text-sm">
                                 Bienvenue sur ma page. Ceci est un aperçu en temps réel de votre thème. Modifiez les couleurs et les formes à gauche pour voir le résultat.
                             </p>
 
@@ -513,10 +543,8 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                     style={{
                                         backgroundColor: 'var(--pico-primary)',
                                         color: 'var(--pico-btn-text)',
-                                        borderRadius: 'var(--pico-radius)',
-                                        borderWidth: 'var(--pico-border-width)',
-                                        borderColor: 'var(--pico-secondary)', // Use secondary
-                                        borderStyle: 'solid',
+                                        borderRadius: '8px',
+                                        borderWidth: '0px',
                                         boxShadow: 'var(--pico-shadow)'
                                     }}
                                 >
@@ -528,9 +556,9 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                     style={{
                                         backgroundColor: 'transparent',
                                         color: 'var(--pico-primary)',
-                                        borderRadius: 'var(--pico-radius)',
-                                        borderWidth: 'var(--pico-border-width)',
-                                        borderColor: 'var(--pico-secondary)', // Use secondary
+                                        borderRadius: '8px',
+                                        borderWidth: '2px',
+                                        borderColor: 'var(--pico-secondary)',
                                         borderStyle: 'solid',
                                         boxShadow: 'var(--pico-shadow)'
                                     }}
@@ -539,8 +567,23 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                 </button>
                             </div>
 
-                            <div className="pt-8 text-xs opacity-50">
-                                <p>Rejoignez-nous sur les réseaux</p>
+                            {/* Demo Social Grid - NOW AT THE END */}
+                            <div className="flex gap-4 justify-center py-4">
+                                {[
+                                    { icon: Globe, label: 'Website' },
+                                    { icon: Twitter, label: 'Twitter' },
+                                    { icon: Instagram, label: 'Instagram' },
+                                    { icon: Linkedin, label: 'Linkedin' }
+                                ].map((item, i) => (
+                                    <div key={i} className="h-10 w-10 rounded-full flex items-center justify-center transition-transform cursor-pointer"
+                                        style={{
+                                            backgroundColor: 'var(--pico-primary)',
+                                            boxShadow: 'var(--pico-shadow)'
+                                        }}
+                                    >
+                                        <item.icon className="h-4 w-4" style={{ color: 'var(--pico-btn-text)' }} />
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

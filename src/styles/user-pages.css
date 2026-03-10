@@ -16,6 +16,7 @@
 
     .pico-container {
         width: 100%;
+        max-width: 600px;
         margin-left: auto;
         margin-right: auto;
         min-height: 100vh;
@@ -34,10 +35,13 @@
 
     @media (min-width: 1024px) {
         .pico-container {
-            max-width: 480px;
+            max-width: 600px;
             min-height: 0;
             box-shadow: var(--pico-shadow);
             border-radius: calc(var(--pico-radius) * 2);
+            border-width: var(--pico-border-width);
+            border-color: var(--pico-secondary);
+            border-style: var(--pico-border-style);
             padding-left: 2rem;
             padding-right: 2rem;
         }

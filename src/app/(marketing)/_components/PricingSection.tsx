@@ -8,8 +8,8 @@ const FEATURES = [
     { name: 'QR Codes', free: true, paid: true },
     { name: 'Raccourcisseur d\'URL', free: true, paid: true },
     { name: 'Analytics basiques', free: true, paid: true },
-    { name: 'Domaine personnalisé', free: false, paid: true },
     { name: 'Suppression du branding', free: false, paid: true },
+    { name: 'Domaine personnalisé', free: false, paid: true },
 ]
 
 export function PricingSection() {

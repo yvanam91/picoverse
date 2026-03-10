@@ -7,9 +7,10 @@ interface LinkBlockProps {
         url: string
     }
     config: PageConfig
+    variant?: 'fill' | 'outline' | 'soft-shadow'
 }
 
-export function LinkBlock({ content, config }: LinkBlockProps) {
+export function LinkBlock({ content, config, variant }: LinkBlockProps) {
     // Helper to get button inline styles
     const getButtonStyle = (): React.CSSProperties => {
         const primary = config.colors?.primary || config.buttonColor || '#000000'
@@ -17,13 +18,13 @@ export function LinkBlock({ content, config }: LinkBlockProps) {
         const buttonText = config.colors?.buttonText || config.buttonTextColor || '#ffffff'
 
         const buttonStyle = config.buttonStyle || 'rounded-md'
-        const buttonVariant = config.buttonVariant || 'fill'
+        const buttonVariant = variant || config.buttonVariant || 'fill'
 
         const baseStyle: React.CSSProperties = {
-            borderRadius: config.borders?.radius || (buttonStyle === 'rounded-full' ? '9999px' : buttonStyle === 'rounded-none' ? '0px' : '8px'),
-            borderWidth: config.borders?.width || (buttonVariant === 'outline' ? '2px' : buttonVariant === 'soft-shadow' ? '1px' : '0px'),
+            borderRadius: buttonStyle === 'rounded-full' ? '9999px' : buttonStyle === 'rounded-none' ? '0px' : '8px',
+            borderWidth: buttonVariant === 'outline' ? '2px' : buttonVariant === 'soft-shadow' ? '1px' : '0px',
             transition: 'all 0.2s',
-            borderStyle: config.borders?.style || 'solid',
+            borderStyle: 'solid',
             boxShadow: 'var(--pico-shadow)' // Apply shadow
         }
 

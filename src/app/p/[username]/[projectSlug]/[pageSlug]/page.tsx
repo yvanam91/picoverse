@@ -1,9 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
 import type { Project, Page, Block, PageConfig } from '@/types/database'
 import { Metadata } from 'next'
 import { BlockFactory } from '@/components/shared/BlockFactory'
-import { getBoxShadow } from '@/lib/utils'
+import { getBoxShadow, cn } from '@/lib/utils'
 import { fontMap } from '@/styles/fonts'
 import { AnalyticsTracker } from '@/components/public/AnalyticsTracker'
 
@@ -95,6 +96,7 @@ export default async function PublicPage({
     const DEFAULT_CONFIG: PageConfig = {
         colors: {
             background: '#ffffff',
+            outerBackground: '#0a0a0a',
             primary: '#000000',
             secondary: '#e5e7eb',
             text: '#1f2937',
@@ -130,6 +132,7 @@ export default async function PublicPage({
     // Dynamic Style Injection
     const themeStyles = {
         '--pico-bg': effectiveConfig.colors?.background || DEFAULT_CONFIG.colors!.background,
+        '--pico-outer-bg': effectiveConfig.colors?.outerBackground || DEFAULT_CONFIG.colors!.outerBackground,
         '--pico-primary': effectiveConfig.colors?.primary || DEFAULT_CONFIG.colors!.primary,
         '--pico-secondary': effectiveConfig.colors?.secondary || DEFAULT_CONFIG.colors!.secondary,
         '--pico-text': effectiveConfig.colors?.text || DEFAULT_CONFIG.colors!.text,
@@ -139,25 +142,37 @@ export default async function PublicPage({
 
         '--pico-radius': effectiveConfig.borders?.radius || '8px',
         '--pico-border-width': effectiveConfig.borders?.width || '1px',
+        '--pico-border-style': effectiveConfig.borders?.style || 'solid',
         '--pico-divider-style': effectiveConfig.dividers?.style || 'solid',
         '--pico-shadow': getBoxShadow(effectiveConfig.shadows?.style || 'none', effectiveConfig.colors?.secondary || '#e5e7eb', effectiveConfig.shadows?.opacity ?? 0.5),
 
         fontFamily: 'var(--pico-font)',
-        backgroundColor: 'var(--pico-bg)',
+        backgroundColor: 'var(--pico-outer-bg)', // Page-wide background
         color: 'var(--pico-text)',
-        backgroundImage: effectiveConfig.headerBackgroundImage ? `url(${effectiveConfig.headerBackgroundImage})` : 'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
     } as React.CSSProperties
 
     return (
-        <div style={themeStyles} className="pico-background min-h-screen w-full flex flex-col justify-center lg:py-8 transition-colors duration-300">
+        <div style={themeStyles} className="pico-background min-h-screen w-full flex flex-col justify-center lg:py-16 transition-colors duration-300">
             <AnalyticsTracker projectId={data.project.id} pageId={page.id} />
 
-            <div className="pico-container">
+            <div className="pico-container relative overflow-hidden flex flex-col">
+                {/* Header Background (Parity with Editor) */}
+                {effectiveConfig.headerBackgroundImage && (
+                    <div className="absolute top-0 left-0 right-0 h-64 z-0">
+                        <img
+                            src={effectiveConfig.headerBackgroundImage}
+                            alt=""
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-transparent"></div>
+                    </div>
+                )}
+
                 {/* Blocks Rendering */}
-                <div className="space-y-6">
+                <div className={cn(
+                    "relative z-10 space-y-6 flex-1",
+                    effectiveConfig.headerBackgroundImage && "pt-32" // Push content down if header exists
+                )}>
                     {blocks?.sort((a, b) => a.position - b.position).map((block) => {
                         if (block.is_visible === false) return null
 
@@ -181,11 +196,11 @@ export default async function PublicPage({
                         </div>
                     )}
                 </div>
-            </div>
 
-            <footer className="text-center py-6 text-sm text-gray-400 opacity-60">
-                Propulsé par Picoverse
-            </footer>
+                <footer className="relative z-10 text-center pt-10 pb-2 text-sm opacity-60 mt-auto" style={{ color: 'var(--pico-text)' }}>
+                    Propulsé par <Link href="/" className="font-bold hover:opacity-80 transition-opacity" style={{ color: 'var(--pico-primary)' }}>Picoverse</Link>
+                </footer>
+            </div>
         </div>
     )
 }

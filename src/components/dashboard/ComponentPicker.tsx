@@ -20,9 +20,10 @@ export function ComponentPicker({ isOpen, onClose, onSelect }: ComponentPickerPr
 
     const mediaBlocks = [
         { id: 'link', label: 'Lien', icon: Link, description: 'Lien externe' },
+        { id: 'secondary-link', label: 'Lien Secondaire', icon: Link, description: 'Bouton contour (Outline)' },
         { id: 'double-link', label: '2 Liens', icon: Columns, description: 'Liens côte à côte' },
         { id: 'embed', label: 'Média / Intégration', icon: ImageIcon, description: 'YouTube, Spotify, etc.' },
-        { id: 'social_grid', label: 'Social', icon: Share2, description: 'Réseaux sociaux' },
+        { id: 'social_grid', label: 'Liens Sociaux', icon: Share2, description: 'Réseaux sociaux' },
     ]
 
     const renderBlockGrid = (blocks: typeof contentBlocks) => (

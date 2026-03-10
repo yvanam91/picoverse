@@ -22,8 +22,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { addBlockWithProject, updateBlock, deleteBlock, updatePageConfig, addBlockWithContent, updateBlockPositions, updateProjectContent } from '@/app/dashboard/actions'
-import { Plus, GripVertical, Trash2, Save, Eye, EyeOff, LayoutTemplate, Type, Heading, Minus, Image as ImageIcon, Twitter, Upload, Loader2, Globe, Settings2, FileText, AlignLeft, AlignCenter, AlignRight, Columns, Instagram, Facebook, Linkedin, Github } from 'lucide-react'
-import { getBoxShadow } from '@/lib/utils'
+import { Plus, GripVertical, Trash2, Save, Eye, EyeOff, LayoutTemplate, Type, Heading, Minus, Image as ImageIcon, Twitter, Upload, Loader2, Globe, Settings2, FileText, AlignLeft, AlignCenter, AlignRight, Columns, Instagram, Facebook, Linkedin, Github, Check, ExternalLink, X } from 'lucide-react'
+import { getBoxShadow, cn } from '@/lib/utils'
 import { HeaderBlock } from '@/components/shared/blocks/HeaderBlock'
 import { SocialGridBlock } from '@/components/shared/blocks/SocialGridBlock'
 import { LinkBlock } from '@/components/shared/blocks/LinkBlock'
@@ -57,15 +57,24 @@ const DEFAULT_CONFIG: PageConfig = {
     fontFamily: 'Inter',
 }
 
-// Helper for Social Icons
-const SOCIAL_ICONS = [
-    { value: 'globe', label: 'Website', icon: Globe },
-    { value: 'twitter', label: 'Twitter', icon: Twitter },
-    { value: 'instagram', label: 'Instagram', icon: Instagram },
-    { value: 'facebook', label: 'Facebook', icon: Facebook },
-    { value: 'linkedin', label: 'LinkedIn', icon: Linkedin },
-    { value: 'github', label: 'GitHub', icon: Github },
-]
+// Social Configuration
+const SOCIAL_PROVIDERS = [
+    { value: 'globe', label: 'Website', icon: Globe, domain: '', placeholder: 'https://www.monsite.fr/' },
+    { value: 'twitter', label: 'Twitter', icon: Twitter, domain: 'https://twitter.com/', placeholder: '@username' },
+    { value: 'instagram', label: 'Instagram', icon: Instagram, domain: 'https://instagram.com/', placeholder: '@username' },
+    { value: 'facebook', label: 'Facebook', icon: Facebook, domain: 'https://facebook.com/', placeholder: '@username' },
+    { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, domain: 'https://linkedin.com/in/', placeholder: '@username' },
+    { value: 'github', label: 'GitHub', icon: Github, domain: 'https://github.com/', placeholder: '@username' },
+] as const
+
+const SOCIAL_ICONS_MAP: Record<string, any> = {
+    globe: Globe,
+    twitter: Twitter,
+    instagram: Instagram,
+    facebook: Facebook,
+    linkedin: Linkedin,
+    github: Github
+}
 
 interface SortableBlockProps {
     block: Block
@@ -78,9 +87,11 @@ interface SortableBlockProps {
     onUpdateContent: (content: any) => void
     deleting: boolean
     projectId: string
+    config: PageConfig
 }
 
-function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDelete, onToggleVisibility, onUpdateContent, deleting, projectId }: SortableBlockProps) {
+function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDelete, onToggleVisibility, onUpdateContent, deleting, projectId, config }: SortableBlockProps) {
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const {
         attributes,
         listeners,
@@ -216,69 +227,171 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
         )
     }
 
+    // --- Social Links Bubble System ---
+    const [activeEditIndex, setActiveEditIndex] = useState<number | null>(null)
+
     const renderSocialGrid = () => {
-        const links = block.content.links || [] // Array of { icon: string, url: string }
+        const links = block.content.links || []
 
         const addLink = () => {
             const newLinks = [...links, { icon: 'globe', url: '' }]
             onUpdateContent({ ...block.content, links: newLinks })
+            setActiveEditIndex(newLinks.length - 1)
         }
 
-        const updateLink = (index: number, field: 'icon' | 'url', value: string) => {
+        const updateLink = (index: number, field: string, value: string) => {
             const newLinks = [...links]
-            newLinks[index] = { ...newLinks[index], [field]: value }
+            const currentItem = newLinks[index]
+            const provider = SOCIAL_PROVIDERS.find(p => p.value === (field === 'icon' ? value : currentItem.icon)) || SOCIAL_PROVIDERS[0]
+
+            let newUrl = value
+
+            if (field === 'icon') {
+                // When icon changes, reset URL to domain only
+                newUrl = provider.domain || ''
+            } else if (field === 'username') {
+                // When username changes, append to domain
+                // Strip @ if user pastes it
+                const cleanedValue = value.replace(/^@/, '')
+                newUrl = (provider.domain || '') + cleanedValue
+            }
+
+            newLinks[index] = {
+                ...currentItem,
+                icon: field === 'icon' ? value : currentItem.icon,
+                url: (field === 'icon' || field === 'username') ? newUrl : value
+            }
             onUpdateContent({ ...block.content, links: newLinks })
         }
 
         const removeLink = (index: number) => {
             const newLinks = links.filter((_: any, i: number) => i !== index)
             onUpdateContent({ ...block.content, links: newLinks })
+            setActiveEditIndex(null)
         }
 
+        const primaryColor = config.colors?.primary || (config as any).primary || config.buttonColor || '#000000'
+        const buttonTextColor = config.colors?.buttonText || (config as any).buttonText || config.buttonTextColor || '#ffffff'
+        const shadow = getBoxShadow(config.shadows?.style || 'none', config.colors?.secondary || '#e5e7eb', config.shadows?.opacity ?? 0.5)
+
         return (
-            <div className="space-y-3">
-                <div className="flex flex-wrap gap-2 justify-center p-2 bg-gray-50 rounded-lg border border-gray-100">
+            <div className="space-y-4">
+                <div className="flex flex-wrap gap-4 justify-center py-6 px-4 bg-pv-dark-100/50 rounded-xl border border-white/5 relative">
                     {links.map((link: any, index: number) => {
-                        const IconObj = SOCIAL_ICONS.find(i => i.value === link.icon) || SOCIAL_ICONS[0]
-                        const Icon = IconObj.icon
+                        const Icon = SOCIAL_ICONS_MAP[link.icon] || Globe
+                        const provider = SOCIAL_PROVIDERS.find(p => p.value === link.icon) || SOCIAL_PROVIDERS[0]
+                        const isEditing = activeEditIndex === index
+                        const isStandardized = !!provider.domain
+                        const username = isStandardized ? (link.url || '').replace(provider.domain, '') : link.url
+
                         return (
-                            <div key={index} className="relative group">
-                                <div className="h-10 w-10 flex items-center justify-center bg-white rounded-full shadow-sm border border-gray-200 text-gray-700">
+                            <div key={index} className="relative">
+                                {/* The Icon Button */}
+                                <button
+                                    onClick={() => setActiveEditIndex(isEditing ? null : index)}
+                                    className={cn(
+                                        "h-12 w-12 flex items-center justify-center rounded-full transition-all duration-300",
+                                        "hover:scale-110 shadow-lg",
+                                        isEditing ? "ring-2 ring-pv-brand-500 outline outline-2 outline-offset-2 outline-pv-brand-500/20" : "border-transparent"
+                                    )}
+                                    style={{
+                                        backgroundColor: primaryColor,
+                                        color: buttonTextColor,
+                                        boxShadow: shadow
+                                    }}
+                                >
                                     <Icon className="h-5 w-5" />
-                                </div>
-                                {/* Edit Overlay */}
-                                <div className="absolute inset-0 -m-2 z-10 hidden group-hover:flex items-center justify-center bg-white/95 rounded-lg border border-gray-200 shadow-lg p-2 flex-col gap-2 min-w-[200px]">
-                                    <div className="flex gap-1 w-full">
-                                        <select
-                                            value={link.icon || 'globe'}
-                                            onChange={(e) => updateLink(index, 'icon', e.target.value)}
-                                            className="bg-gray-50 border border-gray-300 rounded text-xs p-1 text-gray-900 outline-none w-24"
-                                        >
-                                            {SOCIAL_ICONS.map(icon => (
-                                                <option key={icon.value} value={icon.value}>{icon.label}</option>
-                                            ))}
-                                        </select>
-                                        <button onClick={() => removeLink(index)} className="p-1 text-red-500 hover:bg-red-50 rounded">
-                                            <Trash2 className="h-3 w-3" />
-                                        </button>
+                                </button>
+
+                                {/* The Interaction Bubble (Popover) */}
+                                {isEditing && (
+                                    <div
+                                        className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-80 bg-pv-dark-200 border border-white/10 rounded-2xl p-4 shadow-2xl animate-in zoom-in-95 fade-in duration-200"
+                                        style={{ transformOrigin: 'top center' }}
+                                    >
+                                        <div className="flex flex-col gap-4">
+                                            {/* Provider Selection */}
+                                            <div className="grid grid-cols-6 gap-2">
+                                                {SOCIAL_PROVIDERS.map((p) => (
+                                                    <button
+                                                        key={p.value}
+                                                        onClick={() => updateLink(index, 'icon', p.value)}
+                                                        className={cn(
+                                                            "aspect-square flex items-center justify-center rounded-lg border transition-all",
+                                                            link.icon === p.value
+                                                                ? "bg-pv-brand-500 border-pv-brand-500 text-pv-white-0 shadow-lg"
+                                                                : "bg-pv-dark-100 border-white/5 text-pv-white-0/40 hover:text-pv-white-0 hover:border-white/20"
+                                                        )}
+                                                        title={p.label}
+                                                    >
+                                                        <p.icon className="h-4 w-4" />
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* URL / Username Input */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[10px] font-pv-bold text-pv-brand-500 uppercase tracking-widest">
+                                                        {isStandardized ? `Lien ${provider.label}` : 'URL du site'}
+                                                    </label>
+                                                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-pv-white-0/20 hover:text-pv-brand-500 transition-colors">
+                                                        <ExternalLink className="h-3 w-3" />
+                                                    </a>
+                                                </div>
+
+                                                <div className={cn(
+                                                    "flex items-center bg-pv-dark-100 border border-white/10 rounded-xl overflow-hidden transition-all focus-within:ring-1 focus-within:ring-pv-brand-500",
+                                                    !isStandardized && "px-3"
+                                                )}>
+                                                    {isStandardized && (
+                                                        <span className="pl-3 py-2.5 text-xs text-pv-white-0/40 select-none whitespace-nowrap bg-white/5 border-r border-white/5">
+                                                            {provider.domain.replace('https://', '')}
+                                                        </span>
+                                                    )}
+                                                    <input
+                                                        type="text"
+                                                        value={isStandardized ? username : link.url}
+                                                        onChange={(e) => updateLink(index, isStandardized ? 'username' : 'url', e.target.value)}
+                                                        placeholder={provider.placeholder.startsWith('@') ? provider.placeholder.substring(1) : provider.placeholder}
+                                                        className="w-full bg-transparent border-none px-3 py-2.5 text-xs text-pv-white-0 focus:outline-none placeholder:text-pv-white-0/20"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                                                <button
+                                                    onClick={() => removeLink(index)}
+                                                    className="flex items-center gap-2 px-3 py-2 text-[11px] font-pv-bold text-pv-accent-red hover:bg-pv-accent-red/10 rounded-lg transition-colors uppercase tracking-tight"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    Supprimer
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveEditIndex(null)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-pv-brand-500 text-pv-white-0 rounded-lg text-[11px] font-pv-bold hover:bg-pv-brand-500/80 transition-all uppercase tracking-tight shadow-md"
+                                                >
+                                                    <Check className="h-3.5 w-3.5" />
+                                                    Valider
+                                                </button>
+                                            </div>
+                                        </div>
+                                        {/* Simple arrow indicator */}
+                                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-pv-dark-200 border-l border-t border-white/10 rotate-45" />
                                     </div>
-                                    <input
-                                        type="url"
-                                        value={link.url || ''}
-                                        onChange={(e) => updateLink(index, 'url', e.target.value)}
-                                        placeholder="https://..."
-                                        className="w-full bg-pv-dark-100 border border-gray-100/10 rounded text-xs p-1 text-pv-white-0 outline-none focus:ring-1 focus:ring-pv-brand-500 placeholder:text-pv-white-0/80 focus:placeholder-transparent"
-                                    />
-                                </div>
+                                )}
                             </div>
                         )
                     })}
+
                     <button
                         onClick={addLink}
-                        className="h-10 w-10 flex items-center justify-center bg-indigo-50 rounded-full border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                        className="h-12 w-12 flex items-center justify-center bg-pv-brand-500/10 rounded-full border border-pv-brand-500/20 text-pv-brand-500 hover:bg-pv-brand-500/20 transition-all duration-300 shadow-sm"
                         title="Ajouter un réseau"
                     >
-                        <Plus className="h-5 w-5" />
+                        <Plus className="h-6 w-6" />
                     </button>
                 </div>
             </div>
@@ -567,8 +680,8 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
             <div className="flex-1 min-w-0">
                 {/* Block Label */}
                 <div className="mb-4 flex items-center gap-2">
-                    <span className="font-pv-jost font-pv-regular text-pv-16 text-pv-white-0">
-                        {block.type.replace('_', ' ')}
+                    <span className="font-pv-jost font-pv-regular text-pv-16 text-pv-white-0 uppercase">
+                        {block.type === 'social_grid' ? 'Liens Sociaux' : block.type === 'secondary-link' ? 'Lien Secondaire' : block.type.replace('_', ' ').replace('-', ' ')}
                     </span>
                     {block.is_visible === false && (
                         <span className="font-pv-jost font-pv-regular text-pv-16 text-pv-white-0/40">
@@ -584,7 +697,7 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                 {block.type === 'text' && renderTextBlock()}
                 {block.type === 'hero' && renderHeroBlock()}
                 {block.type === 'double-link' && renderDoubleLinkBlock()}
-                {['link', 'file', 'image', 'embed'].includes(block.type) && renderStandardContent()}
+                {['link', 'secondary-link', 'file', 'image', 'embed'].includes(block.type) && renderStandardContent()}
             </div>
 
             <div className="flex flex-col items-end gap-2">
@@ -596,14 +709,52 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                     {block.is_visible !== false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </button>
 
-                <button
-                    onClick={onDelete}
-                    disabled={deleting}
-                    className="rounded-md p-1.5 text-pv-white-0/40 hover:text-pv-accent-red hover:bg-pv-white-0/10 transition-colors"
-                    title="Supprimer"
-                >
-                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
+                        disabled={deleting}
+                        className={cn(
+                            "rounded-md p-1.5 transition-colors",
+                            showDeleteConfirm ? "bg-pv-accent-red text-white" : "text-pv-white-0/40 hover:text-pv-accent-red hover:bg-pv-white-0/10"
+                        )}
+                        title="Supprimer"
+                    >
+                        {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    </button>
+
+                    {/* Delete Confirmation Bubble */}
+                    {showDeleteConfirm && (
+                        <div
+                            className="absolute bottom-full right-0 mb-2 z-[60] w-64 bg-pv-dark-200 border border-white/10 rounded-xl p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                            style={{ transformOrigin: 'bottom right' }}
+                        >
+                            <p className="text-[11px] font-pv-bold text-pv-white-0 uppercase tracking-tight mb-3 text-center">
+                                Confirmer la suppression du bloc ?
+                            </p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-pv-dark-100 text-pv-white-0/60 hover:text-pv-white-0 rounded-lg text-[10px] font-pv-bold transition-all uppercase tracking-tight border border-white/5"
+                                >
+                                    <X className="h-3 w-3" />
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onDelete()
+                                        setShowDeleteConfirm(false)
+                                    }}
+                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-pv-accent-red text-white rounded-lg text-[10px] font-pv-bold hover:bg-pv-accent-red/80 transition-all uppercase tracking-tight shadow-md"
+                                >
+                                    <Check className="h-3 w-3" />
+                                    Supprimer
+                                </button>
+                            </div>
+                            {/* Arrow */}
+                            <div className="absolute -bottom-1 right-2.5 w-2 h-2 bg-pv-dark-200 border-r border-b border-white/10 rotate-45" />
+                        </div>
+                    )}
+                </div>
 
 
             </div>
@@ -711,6 +862,7 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
             let initialContent: any = { title: 'Nouveau bloc', url: '' }
             if (type === 'image' || type === 'file') initialContent = { title: '', url: '' }
             if (type === 'header') initialContent = { title: 'Mon Profil', url: '' }
+            if (type === 'link' || type === 'secondary-link') initialContent = { title: 'Mon super lien', url: '' }
             if (type === 'social_grid') initialContent = { links: [{ icon: 'globe', url: '' }] }
             if (type === 'separator') initialContent = {}
             if (type === 'title') initialContent = { title: 'Nouveau Titre', align: 'left' }
@@ -810,7 +962,7 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
     }
 
     const handleDelete = (blockId: string) => {
-        if (!confirm('Supprimer ce bloc ?')) return
+        // Confirmation is now handled by custom UI bubble in SortableBlock
 
         // Just remove locally
         setBlocks(prev => prev.filter(b => b.id !== blockId))
@@ -924,6 +1076,7 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
         const DEFAULT_THEME_CONFIG: PageConfig = {
             colors: {
                 background: '#ffffff',
+                outerBackground: '#0a0a0a',
                 primary: '#000000',
                 secondary: '#e5e7eb',
                 text: '#1f2937',
@@ -1072,6 +1225,7 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
                                                 onDelete={() => handleDelete(block.id)}
                                                 onToggleVisibility={() => handleToggleVisibility(block.id)}
                                                 onUpdateContent={(content) => handleUpdateContent(block.id, content)}
+                                                config={config}
                                             />
                                         ))}
                                     </div>
