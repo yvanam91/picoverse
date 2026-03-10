@@ -3,6 +3,8 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { cn } from '@/lib/utils'
 
+import { User } from 'lucide-react'
+
 interface SmartCTAProps {
     className?: string
     variant?: 'navbar' | 'hero'
@@ -29,31 +31,19 @@ export async function SmartCTA({ className, variant = 'hero' }: SmartCTAProps) {
     }
 
     if (variant === 'navbar') {
-        if (isRecognized) {
-            return (
-                <Link
-                    href={href}
-                    className={cn(
-                        "pv-primary",
-                        className
-                    )}
-                >
-                    {label}
-                </Link>
-            )
-        } else {
-            return (
-                <Link
-                    href={href}
-                    className={cn(
-                        "pv-primary",
-                        className
-                    )}
-                >
-                    {label}
-                </Link>
-            )
-        }
+        return (
+            <Link
+                href={href}
+                className={cn(
+                    "pv-primary",
+                    "max-[420px]:aspect-square max-[420px]:p-0 max-[420px]:w-10 max-[420px]:h-10",
+                    className
+                )}
+            >
+                <span className="max-[420px]:hidden">{label}</span>
+                <User className="hidden max-[420px]:block w-5 h-5" />
+            </Link>
+        )
     }
 
     // Hero variant

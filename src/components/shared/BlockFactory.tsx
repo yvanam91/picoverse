@@ -46,6 +46,9 @@ export function BlockFactory({ block, config }: BlockFactoryProps) {
         case 'link':
             return <LinkBlock content={block.content as any} config={config} />
 
+        case 'secondary-link':
+            return <LinkBlock content={block.content as any} config={config} variant="outline" />
+
         case 'embed':
             return <EmbedBlock content={block.content as any} config={config} />
 

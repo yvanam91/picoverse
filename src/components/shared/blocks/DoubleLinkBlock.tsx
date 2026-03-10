@@ -29,10 +29,10 @@ export function DoubleLinkBlock({ content, config }: DoubleLinkBlockProps) {
         const buttonVariant = config.buttonVariant || 'fill'
 
         const baseStyle: React.CSSProperties = {
-            borderRadius: config.borders?.radius || (buttonStyle === 'rounded-full' ? '9999px' : buttonStyle === 'rounded-none' ? '0px' : '8px'),
-            borderWidth: config.borders?.width || (buttonVariant === 'outline' ? '2px' : buttonVariant === 'soft-shadow' ? '1px' : '0px'),
+            borderRadius: buttonStyle === 'rounded-full' ? '9999px' : buttonStyle === 'rounded-none' ? '0px' : '8px',
+            borderWidth: buttonVariant === 'outline' ? '2px' : buttonVariant === 'soft-shadow' ? '1px' : '0px',
             transition: 'all 0.2s',
-            borderStyle: config.borders?.style || 'solid',
+            borderStyle: 'solid',
             backgroundColor: primary,
             color: buttonText,
             borderColor: secondary, // Use secondary
