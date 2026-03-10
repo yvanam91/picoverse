@@ -20,7 +20,7 @@ interface WelcomeEmailProps {
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-export const WelcomeEmail = ({ firstName = "Aventurier" }: WelcomeEmailProps) => (
+export const WelcomeEmail = ({ firstName }: WelcomeEmailProps) => (
     <Html>
         <Head />
         <Preview>Bienvenue dans l'univers Picoverse 🚀</Preview>

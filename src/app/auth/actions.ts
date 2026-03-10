@@ -239,7 +239,7 @@ export async function signUp(prevState: SignupState, formData: FormData): Promis
             from: process.env.NEXT_PUBLIC_EMAIL_FROM || 'Picoverse <onboarding@resend.dev>',
             to: email,
             subject: "Bienvenue dans l'univers Picoverse 🚀",
-            react: WelcomeEmail({ firstName: rawUsername }),
+            react: WelcomeEmail({ firstName: normalizedUsername }),
         });
     } catch (emailError) {
         // On log l'erreur mais on ne bloque pas l'inscription
@@ -310,11 +310,11 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     // 1. Get user profile
     const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('username')
         .eq('email', email)
         .single()
 
-    const firstName = profile?.full_name || 'Aventurier'
+    const firstName = profile?.username || 'Utilisateur'
 
     // 2. Generate link
     const { data, error } = await admin.auth.admin.generateLink({
