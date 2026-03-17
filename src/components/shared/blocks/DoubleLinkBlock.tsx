@@ -77,7 +77,7 @@ export function DoubleLinkBlock({ content, config }: DoubleLinkBlockProps) {
                     className="group relative flex w-full items-center justify-center px-4 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md hover:opacity-95"
                     style={buttonStyle}
                 >
-                    <div className="font-medium text-sm md:text-base text-center truncate px-2 w-full">
+                    <div className="font-medium text-sm @md:text-base text-center truncate px-2 w-full">
                         {link.label || 'Lien'}
                     </div>
                 </a>

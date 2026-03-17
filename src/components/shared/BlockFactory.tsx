@@ -11,6 +11,8 @@ import { SeparatorBlock } from './blocks/SeparatorBlock'
 import { HeroBlock } from './blocks/HeroBlock'
 import { ImageBlock } from './blocks/ImageBlock'
 import { FileBlock } from './blocks/FileBlock'
+import { MapBlock } from './blocks/MapBlock'
+import { ContactBlock } from './blocks/ContactBlock'
 
 interface BlockFactoryProps {
     block: Block
@@ -57,6 +59,12 @@ export function BlockFactory({ block, config }: BlockFactoryProps) {
 
         case 'image':
             return <ImageBlock content={block.content as any} config={config} />
+
+        case 'map':
+            return <MapBlock content={block.content as any} config={config} />
+
+        case 'contact':
+            return <ContactBlock content={block.content as any} config={config} />
 
         default:
             console.warn(`Type de bloc inconnu: ${block.type}`)

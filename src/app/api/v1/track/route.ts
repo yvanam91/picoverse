@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
             const { error } = await supabase.from('stats_clicks').insert({
                 project_id: projectId,
                 page_id: pageId,
-                session_id: sessionId,
                 block_id: blockId,
                 block_type: blockType,
                 device: deviceType

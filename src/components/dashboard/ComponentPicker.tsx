@@ -1,4 +1,4 @@
-import { X, Type, Link, Image, Share2, LayoutTemplate, Minus, Heading, Columns, ImageIcon, FileText } from 'lucide-react'
+import { X, Type, Link, Image, Share2, LayoutTemplate, Minus, Heading, Columns, ImageIcon, FileText, MapPin, UserPlus } from 'lucide-react'
 
 interface ComponentPickerProps {
     isOpen: boolean
@@ -23,7 +23,9 @@ export function ComponentPicker({ isOpen, onClose, onSelect }: ComponentPickerPr
         { id: 'secondary-link', label: 'Lien Secondaire', icon: Link, description: 'Bouton contour (Outline)' },
         { id: 'double-link', label: '2 Liens', icon: Columns, description: 'Liens côte à côte' },
         { id: 'embed', label: 'Média / Intégration', icon: ImageIcon, description: 'YouTube, Spotify, etc.' },
+        { id: 'map', label: 'Carte', icon: MapPin, description: 'Google Maps' },
         { id: 'social_grid', label: 'Liens Sociaux', icon: Share2, description: 'Réseaux sociaux' },
+        { id: 'contact', label: 'Contact vCard', icon: UserPlus, description: 'Ajout aux contacts' },
     ]
 
     const renderBlockGrid = (blocks: typeof contentBlocks) => (

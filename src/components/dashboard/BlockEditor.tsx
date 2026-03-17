@@ -22,7 +22,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { addBlockWithProject, updateBlock, deleteBlock, updatePageConfig, addBlockWithContent, updateBlockPositions, updateProjectContent } from '@/app/dashboard/actions'
-import { Plus, GripVertical, Trash2, Save, Eye, EyeOff, LayoutTemplate, Type, Heading, Minus, Image as ImageIcon, Twitter, Upload, Loader2, Globe, Settings2, FileText, AlignLeft, AlignCenter, AlignRight, Columns, Instagram, Facebook, Linkedin, Github, Check, ExternalLink, X } from 'lucide-react'
+import { Plus, GripVertical, Trash2, Save, Eye, EyeOff, LayoutTemplate, Type, Heading, Minus, Image as ImageIcon, Twitter, Upload, Loader2, Globe, Settings2, FileText, AlignLeft, AlignCenter, AlignRight, Columns, Instagram, Facebook, Linkedin, Github, Check, ExternalLink, X, UserPlus } from 'lucide-react'
 import { getBoxShadow, cn } from '@/lib/utils'
 import { HeaderBlock } from '@/components/shared/blocks/HeaderBlock'
 import { SocialGridBlock } from '@/components/shared/blocks/SocialGridBlock'
@@ -37,6 +37,7 @@ import { fontMap } from '@/styles/fonts'
 import ClientOnly from '@/components/ClientOnly'
 import { toast } from 'sonner'
 import { ComponentPicker } from './ComponentPicker'
+import '@/styles/user-pages.css'
 
 interface BlockEditorProps {
     projectId: string
@@ -354,7 +355,7 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                                                         value={isStandardized ? username : link.url}
                                                         onChange={(e) => updateLink(index, isStandardized ? 'username' : 'url', e.target.value)}
                                                         placeholder={provider.placeholder.startsWith('@') ? provider.placeholder.substring(1) : provider.placeholder}
-                                                        className="w-full bg-transparent border-none px-3 py-2.5 text-xs text-pv-white-0 focus:outline-none placeholder:text-pv-white-0/20"
+                                                        className="w-full bg-transparent border-none px-3 py-2.5 text-xs text-pv-white-0 focus:outline-none placeholder:text-pv-white-0/20 focus:placeholder-transparent"
                                                         autoFocus
                                                     />
                                                 </div>
@@ -545,6 +546,113 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                     placeholder="Texte descriptif..."
                 />
             </div>
+            <div className="flex items-center justify-between mt-4 p-3 rounded-lg">
+                <span className="text-xs font-pv-medium text-pv-white-0/80 tracking-wide">
+                    Appliquer une couleur de fond
+                </span>
+                <button
+                    onClick={() => onUpdateContent({ ...block.content, useSecondaryColor: !block.content.useSecondaryColor })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-pv-brand-500 focus:ring-offset-2 focus:ring-offset-pv-dark-200 border border-white/10 ${block.content.useSecondaryColor ? 'bg-pv-brand-500' : 'bg-pv-dark-200'}`}
+                >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${block.content.useSecondaryColor ? 'translate-x-6 bg-white' : 'translate-x-1 bg-pv-white-0/60'}`} />
+                </button>
+            </div>
+        </div>
+    )
+
+    const renderMapBlock = () => (
+        <div className="space-y-3 w-full">
+            <div>
+                <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Adresse postale</label>
+                <input
+                    type="text"
+                    value={block.content.address || ''}
+                    onChange={(e) => onUpdateContent({ ...block.content, address: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 focus:placeholder-transparent transition-colors"
+                    placeholder="Ex: 123 Rue de la Paix, Paris"
+                />
+            </div>
+            <div>
+                <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Nom du lieu / Légende (facultatif)</label>
+                <input
+                    type="text"
+                    value={block.content.label || ''}
+                    onChange={(e) => onUpdateContent({ ...block.content, label: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 focus:placeholder-transparent transition-colors"
+                    placeholder="Ex: Notre boutique"
+                />
+            </div>
+        </div>
+    )
+
+    const renderContactBlock = () => (
+        <div className="space-y-4 w-full">
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Prénom</label>
+                    <input
+                        type="text"
+                        value={block.content.firstName || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, firstName: e.target.value })}
+                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 transition-colors"
+                        placeholder="Jean"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Nom</label>
+                    <input
+                        type="text"
+                        value={block.content.lastName || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, lastName: e.target.value })}
+                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 transition-colors"
+                        placeholder="Dupont"
+                    />
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Téléphone</label>
+                    <input
+                        type="tel"
+                        value={block.content.phone || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, phone: e.target.value })}
+                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 transition-colors"
+                        placeholder="06 12 34 56 78"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Email</label>
+                    <input
+                        type="email"
+                        value={block.content.email || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, email: e.target.value })}
+                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 transition-colors"
+                        placeholder="jean@exemple.fr"
+                    />
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Organisation (facultatif)</label>
+                    <input
+                        type="text"
+                        value={block.content.org || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, org: e.target.value })}
+                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 transition-colors"
+                        placeholder="Société SAS"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Poste (facultatif)</label>
+                    <input
+                        type="text"
+                        value={block.content.jobTitle || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, jobTitle: e.target.value })}
+                        className="block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 transition-colors"
+                        placeholder="Directeur Commercial"
+                    />
+                </div>
+            </div>
         </div>
     )
 
@@ -696,6 +804,8 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                 {block.type === 'title' && renderTitleBlock()}
                 {block.type === 'text' && renderTextBlock()}
                 {block.type === 'hero' && renderHeroBlock()}
+                {block.type === 'map' && renderMapBlock()}
+                {block.type === 'contact' && renderContactBlock()}
                 {block.type === 'double-link' && renderDoubleLinkBlock()}
                 {['link', 'secondary-link', 'file', 'image', 'embed'].includes(block.type) && renderStandardContent()}
             </div>
@@ -859,17 +969,19 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
     const handleAddBlock = async (type: Block['type']) => {
         setLoadingAdd(true)
         try {
-            let initialContent: any = { title: 'Nouveau bloc', url: '' }
+            let initialContent: any = { title: '', url: '' }
             if (type === 'image' || type === 'file') initialContent = { title: '', url: '' }
-            if (type === 'header') initialContent = { title: 'Mon Profil', url: '' }
-            if (type === 'link' || type === 'secondary-link') initialContent = { title: 'Mon super lien', url: '' }
+            if (type === 'header') initialContent = { title: '', url: '' }
+            if (type === 'link' || type === 'secondary-link') initialContent = { title: '', url: '' }
             if (type === 'social_grid') initialContent = { links: [{ icon: 'globe', url: '' }] }
             if (type === 'separator') initialContent = {}
-            if (type === 'title') initialContent = { title: 'Nouveau Titre', align: 'left' }
-            if (type === 'text') initialContent = { text: 'Votre texte ici...' }
-            if (type === 'hero') initialContent = { title: 'Titre Hero', text: 'Description du hero', url: '' }
+            if (type === 'title') initialContent = { title: '', align: 'left' }
+            if (type === 'text') initialContent = { text: '' }
+            if (type === 'hero') initialContent = { title: '', text: '', url: '' }
             if (type === 'embed') initialContent = { url: '' }
-            if (type === 'double-link') initialContent = { links: [{ label: 'Lien 1', url: '' }, { label: 'Lien 2', url: '' }] }
+            if (type === 'map') initialContent = { address: '', label: '', zoom: 15 }
+            if (type === 'double-link') initialContent = { links: [{ label: '', url: '' }, { label: '', url: '' }] }
+            if (type === 'contact') initialContent = { firstName: '', lastName: '', phone: '', email: '', org: '', jobTitle: '' }
 
             const newBlock: Block = {
                 id: crypto.randomUUID(), // Local Temp ID
@@ -1131,7 +1243,7 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
         const headerBg = effectiveThemeConfig.headerBackgroundImage
 
         return (
-            <div key={previewKey} className="h-[600px] w-full max-w-[375px] mx-auto overflow-y-auto border-8 border-gray-800 rounded-[3rem] shadow-2xl transition-colors duration-200 relative overflow-hidden scrollbar-hide" style={{ ...containerStyle, boxShadow: 'var(--pico-shadow)' }}>
+            <div key={previewKey} className="@container pico-background h-[600px] w-full max-w-[375px] mx-auto border-8 border-gray-800 rounded-[3rem] shadow-2xl transition-colors duration-200 relative overflow-x-hidden overflow-y-auto scrollbar-hide" style={{ ...containerStyle, boxShadow: 'var(--pico-shadow)' }}>
 
                 {/* Debug Theme Name */}
 
