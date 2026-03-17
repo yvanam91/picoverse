@@ -8,7 +8,7 @@ export type Profile = {
 }
 
 
-export type BlockType = 'text' | 'image' | 'video' | 'button' | 'hero' | 'link' | 'secondary-link' | 'double-link' | 'file' | 'header' | 'social_grid' | 'separator' | 'title' | 'embed'
+export type BlockType = 'text' | 'image' | 'video' | 'button' | 'hero' | 'link' | 'secondary-link' | 'double-link' | 'file' | 'header' | 'social_grid' | 'separator' | 'title' | 'embed' | 'map' | 'contact'
 
 export interface Block {
     id: string

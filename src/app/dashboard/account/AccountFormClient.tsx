@@ -61,7 +61,7 @@ export default function AccountFormClient({ initialProfile }: AccountFormClientP
                                     maxLength={20}
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="block w-full bg-white-0/5 border border-white-0/10 rounded-xl p-3 text-white-0 placeholder:text-white-0/20 focus:outline-none focus:border-pv-brand-500 transition-colors text-sm font-pv-regular"
+                                    className="block w-full bg-white-0/5 border border-white-0/10 rounded-xl p-3 text-white-0 placeholder:text-white-0/20 focus:outline-none focus:border-pv-brand-500 focus:placeholder-transparent transition-colors text-sm font-pv-regular"
                                     placeholder="Votre nom"
                                 />
                                 <div className="mt-2 flex justify-end">

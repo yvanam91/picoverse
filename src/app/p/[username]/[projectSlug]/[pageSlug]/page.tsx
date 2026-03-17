@@ -155,7 +155,7 @@ export default async function PublicPage({
         <div style={themeStyles} className="pico-background min-h-screen w-full flex flex-col justify-center lg:py-16 transition-colors duration-300">
             <AnalyticsTracker projectId={data.project.id} pageId={page.id} />
 
-            <div className="pico-container relative overflow-hidden flex flex-col">
+            <div className="@container pico-container relative overflow-hidden flex flex-col">
                 {/* Header Background (Parity with Editor) */}
                 {effectiveConfig.headerBackgroundImage && (
                     <div className="absolute top-0 left-0 right-0 h-64 z-0">

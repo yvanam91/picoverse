@@ -242,7 +242,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                         setSelectedThemeId(e.target.value)
                                     }
                                 }}
-                                className="w-full rounded-md border-white/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 text-pv-16 font-pv-jost p-2 border text-pv-white-0 placeholder:text-pv-white-0/30"
+                                className="w-full rounded-md border-white/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 text-pv-16 font-pv-jost p-2 border text-pv-white-0 placeholder:text-pv-white-0/30 focus:placeholder-transparent"
                             >
                                 <option value="new">+ Créer un nouveau thème</option>
                                 {themes.map(t => (
@@ -258,7 +258,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                 value={themeName}
                                 onChange={(e) => setThemeName(e.target.value)}
                                 placeholder="Nom de votre thème"
-                                className="w-full rounded-md border-white/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 text-pv-16 font-pv-jost p-2 border text-pv-white-0 placeholder:text-pv-white-0/30"
+                                className="w-full rounded-md border-white/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 text-pv-16 font-pv-jost p-2 border text-pv-white-0 placeholder:text-pv-white-0/30 focus:placeholder-transparent"
                             />
                         </div>
 

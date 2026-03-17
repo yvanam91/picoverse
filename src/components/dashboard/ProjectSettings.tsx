@@ -121,7 +121,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                                 type="text"
                                 value={name}
                                 onChange={handleNameChange}
-                                className={`flex-1 rounded-md border bg-pv-dark-100 text-white-0 shadow-sm focus:ring-pv-brand-500 sm:text-sm p-2 ${nameError ? 'border-red-500 focus:border-red-500' : 'border-white-0/10 focus:border-pv-brand-500'}`}
+                                className={`flex-1 rounded-md border bg-pv-dark-100 text-white-0 shadow-sm focus:ring-pv-brand-500 sm:text-sm p-2 focus:placeholder-transparent ${nameError ? 'border-red-500 focus:border-red-500' : 'border-white-0/10 focus:border-pv-brand-500'}`}
                                 placeholder="Nom du projet"
                             />
                             <button

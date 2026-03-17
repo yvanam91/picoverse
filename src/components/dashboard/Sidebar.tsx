@@ -151,7 +151,7 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
             {/* Plan Usage Section */}
             <div className="px-5 py-4 border-t border-white-0/5">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest">Utilisation</span>
+                    <span className="text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest">Plan</span>
                     <span className="text-[10px] font-pv-bold text-pv-brand-500 uppercase tracking-widest">{planUsage?.plan || 'Free'}</span>
                 </div>
 
@@ -205,7 +205,7 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 shrink-0"></div>
                         <div className="flex flex-col min-w-0 text-left">
                             <span className="text-sm font-medium truncate">{username || 'Mon Compte'}</span>
-                            <span className="text-xs opacity-70">Plan Gratuit</span>
+                            <span className="text-xs opacity-70">Mon compte</span>
                         </div>
                     </Link>
                     <form action={signOut}>
