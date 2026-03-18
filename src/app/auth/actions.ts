@@ -7,10 +7,21 @@ import { resend } from '@/lib/resend'
 import { WelcomeEmail } from '../../../emails/welcomeEmail'
 import { ResetPasswordEmail } from '../../../emails/resetPasswordEmail'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 
 export async function signOut() {
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+        const posthog = getPostHogClient()
+        posthog.capture({
+            distinctId: user.id,
+            event: 'user_logged_out',
+        })
+    }
+
     await supabase.auth.signOut()
     revalidatePath('/', 'layout')
     redirect('/login')
@@ -233,6 +244,17 @@ export async function signUp(prevState: SignupState, formData: FormData): Promis
         return { error: error.message }
     }
 
+    // Track signup server-side
+    const posthog = getPostHogClient()
+    posthog.capture({
+        distinctId: email,
+        event: 'user_signed_up',
+        properties: {
+            username: normalizedUsername,
+            email,
+        },
+    })
+
     // Envoi de l'e-mail de bienvenue via Resend
     try {
         await resend.emails.send({
@@ -281,6 +303,21 @@ export async function signIn(prevState: { error?: string }, formData: FormData) 
             return { error: 'Veuillez confirmer votre adresse e-mail pour accéder à votre dashboard.' }
         }
         return { error: 'Identifiants incorrects' }
+    }
+
+    // Get user after successful login for server-side tracking
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+        const posthog = getPostHogClient()
+        posthog.identify({
+            distinctId: user.id,
+            properties: { email: user.email },
+        })
+        posthog.capture({
+            distinctId: user.id,
+            event: 'user_logged_in',
+            properties: { email: user.email },
+        })
     }
 
     // Set recognized cookie
@@ -345,6 +382,13 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     } catch (err) {
         console.error('Error sending reset email:', err)
     }
+
+    const posthog = getPostHogClient()
+    posthog.capture({
+        distinctId: email,
+        event: 'password_reset_requested',
+        properties: { email },
+    })
 
     return { success: true, message: 'Surveille tes mails, tu recevras vite un lien pour modifier ton mot de passe si un compte est associé à cette adresse' }
 }

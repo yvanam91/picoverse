@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { PLAN_LIMITS, getPlanLimits } from '@/utils/plan-limits'
 import type { Block, PageConfig, Project, BlockType, Theme, Page } from '@/types/database'
 import { normalizeSlug } from '@/lib/utils'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export async function deleteProject(projectId: string) {
     console.log('--- Attempting to delete project:', projectId)
@@ -41,6 +42,13 @@ export async function deleteProject(projectId: string) {
         console.error('Supabase DELETE error:', error)
         return { success: false, error: error.message }
     }
+
+    const posthog = getPostHogClient()
+    posthog.capture({
+        distinctId: user.id,
+        event: 'project_deleted',
+        properties: { project_id: projectId },
+    })
 
     console.log('Project deleted successfully, revalidating...')
 
@@ -175,6 +183,12 @@ export async function createProject(formData: FormData) {
         .eq('user_id', user.id)
 
     if (projectCount !== null && projectCount >= maxProjects) {
+        const posthog = getPostHogClient()
+        posthog.capture({
+            distinctId: user.id,
+            event: 'plan_limit_reached',
+            properties: { limit_type: 'projects', plan: planName, max: maxProjects },
+        })
         return { error: `Limite de votre plan ${planName} atteinte (${maxProjects} projet). Passez au plan Pro pour créer plus de contenu.` }
     }
     // ------------------------
@@ -220,6 +234,13 @@ export async function createProject(formData: FormData) {
     if (error) {
         throw new Error(error.message)
     }
+
+    const posthogForCreate = getPostHogClient()
+    posthogForCreate.capture({
+        distinctId: user.id,
+        event: 'project_created',
+        properties: { project_id: data.id, project_slug: slug, plan: planName },
+    })
 
     revalidatePath('/dashboard')
 
@@ -315,6 +336,12 @@ export async function createPage(projectId: string, formData: FormData) {
             .eq('project_id', projectId)
 
         if (pageCount !== null && pageCount >= maxPages) {
+            const posthog = getPostHogClient()
+            posthog.capture({
+                distinctId: user!.id,
+                event: 'plan_limit_reached',
+                properties: { limit_type: 'pages', plan: planName, max: maxPages, project_id: projectId },
+            })
             return { error: `Limite de pages atteinte pour ce projet (${maxPages} pages). Passez au niveau supérieur pour plus de flexibilité.` }
         }  // ------------------------
 
@@ -352,6 +379,13 @@ export async function createPage(projectId: string, formData: FormData) {
         if (error) {
             return { error: error.message }
         }
+
+        const posthog = getPostHogClient()
+        posthog.capture({
+            distinctId: user!.id,
+            event: 'page_created',
+            properties: { page_id: data.id, page_slug: slug, project_id: projectId, plan: planName },
+        })
 
         if (project?.slug) {
             revalidatePath(`/dashboard/${project.slug}`)
@@ -442,6 +476,16 @@ export async function addBlockWithContent(projectId: string, pageId: string, typ
         return { error: error.message }
     }
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+        const posthog = getPostHogClient()
+        posthog.capture({
+            distinctId: user.id,
+            event: 'block_added',
+            properties: { block_type: type, page_id: pageId, project_id: projectId },
+        })
+    }
+
     revalidatePath(`/dashboard/${projectId}/${pageId}`)
     return { data }
 }
@@ -473,6 +517,16 @@ export async function deleteBlock(projectId: string, pageId: string, blockId: st
 
     if (error) {
         return { error: error.message }
+    }
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+        const posthog = getPostHogClient()
+        posthog.capture({
+            distinctId: user.id,
+            event: 'block_deleted',
+            properties: { block_id: blockId, page_id: pageId, project_id: projectId },
+        })
     }
 
     revalidatePath(`/dashboard/${projectId}/${pageId}`)
@@ -603,6 +657,13 @@ export async function saveTheme(name: string, config: PageConfig, projectId: str
         return { error: error.message }
     }
 
+    const posthog = getPostHogClient()
+    posthog.capture({
+        distinctId: user.id,
+        event: 'theme_saved',
+        properties: { theme_id: data.id, theme_name: name, project_id: projectId },
+    })
+
     return { success: true, theme: data }
 }
 
@@ -701,6 +762,13 @@ export async function deletePage(projectId: string, pageId: string) {
     if (error) {
         return { error: error.message }
     }
+
+    const posthog = getPostHogClient()
+    posthog.capture({
+        distinctId: user.id,
+        event: 'page_deleted',
+        properties: { page_id: pageId, project_id: projectId },
+    })
 
     revalidatePath(`/dashboard/${projectId}`)
     return { success: true }

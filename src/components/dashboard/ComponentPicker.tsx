@@ -20,6 +20,7 @@ export function ComponentPicker({ isOpen, onClose, onSelect }: ComponentPickerPr
 
     const mediaBlocks = [
         { id: 'link', label: 'Lien', icon: Link, description: 'Lien externe' },
+        { id: 'internal_link', label: 'Lien Interne', icon: Link, description: 'Au sein du projet' },
         { id: 'secondary-link', label: 'Lien Secondaire', icon: Link, description: 'Bouton contour (Outline)' },
         { id: 'double-link', label: '2 Liens', icon: Columns, description: 'Liens côte à côte' },
         { id: 'embed', label: 'Média / Intégration', icon: ImageIcon, description: 'YouTube, Spotify, etc.' },

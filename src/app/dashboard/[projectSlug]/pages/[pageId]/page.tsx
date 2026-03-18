@@ -100,6 +100,7 @@ export default async function EditorPage({
                             initialConfig={(page as Page).config && Object.keys((page as Page).config || {}).length > 0 ? (page as Page).config : (defaultTheme?.config || {})}
                             initialPublishedState={(page as Page).is_published ?? true}
                             initialMetaTitle={(page as Page).meta_title}
+                            initialDescription={(page as Page).description}
                             initialTheme={(page as any).theme || defaultTheme}
                         />
                     </div>
