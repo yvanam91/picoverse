@@ -12,11 +12,11 @@ import { getPostHogClient } from '@/lib/posthog-server'
 
 // --- TYPES ---
 
-export type SignupState = {
+export type AuthState = {
     error?: string
     success?: boolean
     message?: string
-}
+} | null | undefined
 
 interface UpdateAccountData {
     displayName: string
@@ -152,7 +152,7 @@ export async function checkEmailAvailability(email: string): Promise<{ available
     return { available: true }
 }
 
-export async function signUp(prevState: SignupState, formData: FormData): Promise<SignupState> {
+export async function signUp(prevState: AuthState, formData: FormData): Promise<AuthState> {
     try {
         const email = formData.get('email') as string
         const password = formData.get('password') as string
@@ -261,7 +261,7 @@ export async function signUp(prevState: SignupState, formData: FormData): Promis
     }
 }
 
-export async function signIn(prevState: { error?: string }, formData: FormData) {
+export async function signIn(prevState: AuthState, formData: FormData): Promise<AuthState> {
     let success = false
     try {
         const email = formData.get('email') as string
