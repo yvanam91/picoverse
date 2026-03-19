@@ -157,7 +157,8 @@ export async function checkEmailAvailability(email: string): Promise<{ available
 
     if (error && error.code !== 'PGRST116') {
         console.error('Error checking email:', error)
-        return { available: false, error: 'Erreur lors de la vérification' }
+        // On ne bloque pas l'utilisateur si la vérification échoue techniquement
+        return { available: true }
     }
 
     if (data) {

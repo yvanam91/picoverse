@@ -221,15 +221,16 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
                             <span className="text-xs opacity-70">Mon compte</span>
                         </div>
                     </Link>
-                    <form action={signOut}>
-                        <button
-                            type="submit"
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-md transition-colors"
-                            aria-label="Se déconnecter"
-                        >
-                            <LogOut className="h-4 w-4" />
-                        </button>
-                    </form>
+                    <button
+                        onClick={async () => {
+                            await signOut()
+                            router.push('/login')
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-white-0/5 rounded-md transition-colors"
+                        aria-label="Se déconnecter"
+                    >
+                        <LogOut className="h-4 w-4" />
+                    </button>
                 </div>
             </div>
 
