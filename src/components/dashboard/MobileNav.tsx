@@ -110,7 +110,7 @@ export function MobileNav({ projectSlug, projects, currentProject, username }: M
                         onDragEnd={(e, info) => {
                             if (info.offset.x < -50) setIsOpen(false)
                         }}
-                        className="fixed top-0 bottom-0 left-0 w-[66%] bg-pv-dark-0 z-50 shadow-2xl h-full border-r border-white-0/10"
+                        className="fixed top-0 bottom-0 left-0 w-[66%] z-50 shadow-2xl h-full"
                     >
                         {/* Reuse Sidebar but inside the drawer */}
                         <div className="h-full overflow-y-auto">

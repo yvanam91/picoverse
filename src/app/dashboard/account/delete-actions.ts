@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { redirect } from 'next/navigation'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export async function deleteUserAccount() {
     const supabase = await createClient()
@@ -31,6 +32,12 @@ export async function deleteUserAccount() {
     // otherwise we might need to manually delete from tables first)
     // Assuming Supabase Cascade Delete is set up or we rely on it. 
     // Standard Supabase starter often has 'on delete cascade' for profiles linked to auth.users.
+
+    const posthog = getPostHogClient()
+    posthog.capture({
+        distinctId: user.id,
+        event: 'account_deleted',
+    })
 
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id)
 

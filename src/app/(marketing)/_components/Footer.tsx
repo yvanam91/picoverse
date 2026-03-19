@@ -11,6 +11,9 @@ export function Footer() {
                     <Link href="/mentions-legales" className="text-zinc-400 hover:text-zinc-500 dark:hover:text-zinc-300 transition-colors">
                         Mentions légales
                     </Link>
+                    <Link href="/confidentialite" className="text-zinc-400 hover:text-zinc-500 dark:hover:text-zinc-300 transition-colors">
+                        Politique de confidentialité
+                    </Link>
                     <Link href="/contact" className="text-zinc-400 hover:text-zinc-500 dark:hover:text-zinc-300 transition-colors">
                         Contact
                     </Link>

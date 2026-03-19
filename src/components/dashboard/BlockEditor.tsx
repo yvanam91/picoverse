@@ -46,6 +46,7 @@ interface BlockEditorProps {
     initialConfig: PageConfig
     initialPublishedState: boolean
     initialMetaTitle?: string
+    initialDescription?: string
     initialTheme?: any // Should ideally be Theme type
 }
 
@@ -771,6 +772,61 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
         )
     }
 
+    const renderInternalLinkBlock = () => {
+        const [pages, setPages] = useState<{id: string, title: string, slug: string}[]>([])
+        
+        useEffect(() => {
+            const fetchPages = async () => {
+                const supabase = createClient()
+                const { data } = await supabase.from('pages').select('id, title, slug').eq('project_id', projectId)
+                if (data) {
+                    // Ideally we should filter out the current page, but we don't pass pageId to SortableBlock.
+                    setPages(data)
+                }
+            }
+            if (block.type === 'internal_link') {
+                fetchPages()
+            }
+        }, [projectId, block.type])
+
+        return (
+            <div className="space-y-3 w-full">
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Titre du bouton</label>
+                    <input
+                        type="text"
+                        value={block.content.title || ''}
+                        onChange={(e) => onUpdateContent({ ...block.content, title: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border placeholder:text-pv-white-0/20 focus:placeholder-transparent transition-colors"
+                        placeholder="Voir aussi : Ma page"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-pv-medium text-pv-white-0/40 uppercase tracking-widest mb-1.5">Page cible</label>
+                    <select
+                        value={block.content.targetPageId || ''}
+                        onChange={(e) => {
+                            const selectedPage = pages.find(p => p.id === e.target.value)
+                            onUpdateContent({
+                                ...block.content,
+                                targetPageId: e.target.value,
+                                slug: selectedPage?.slug || ''
+                            })
+                        }}
+                        className="mt-1 block w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm text-pv-white-0 p-2 border transition-colors"
+                    >
+                        <option value="">-- Sélectionnez une page --</option>
+                        {pages.map(page => (
+                            <option key={page.id} value={page.id}>
+                                {page.title} (/{page.slug})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div
             ref={setNodeRef}
@@ -789,7 +845,7 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                 {/* Block Label */}
                 <div className="mb-4 flex items-center gap-2">
                     <span className="font-pv-jost font-pv-regular text-pv-16 text-pv-white-0 uppercase">
-                        {block.type === 'social_grid' ? 'Liens Sociaux' : block.type === 'secondary-link' ? 'Lien Secondaire' : block.type.replace('_', ' ').replace('-', ' ')}
+                        {block.type === 'social_grid' ? 'Liens Sociaux' : block.type === 'secondary-link' ? 'Lien Secondaire' : block.type === 'internal_link' ? 'Lien Interne' : block.type.replace('_', ' ').replace('-', ' ')}
                     </span>
                     {block.is_visible === false && (
                         <span className="font-pv-jost font-pv-regular text-pv-16 text-pv-white-0/40">
@@ -807,6 +863,7 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
                 {block.type === 'map' && renderMapBlock()}
                 {block.type === 'contact' && renderContactBlock()}
                 {block.type === 'double-link' && renderDoubleLinkBlock()}
+                {block.type === 'internal_link' && renderInternalLinkBlock()}
                 {['link', 'secondary-link', 'file', 'image', 'embed'].includes(block.type) && renderStandardContent()}
             </div>
 
@@ -873,7 +930,7 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
 }
 
 
-export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, initialPublishedState, initialMetaTitle, initialTheme }: BlockEditorProps) {
+export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, initialPublishedState, initialMetaTitle, initialDescription, initialTheme }: BlockEditorProps) {
     const [activeTab, setActiveTab] = useState<'content' | 'settings'>('content')
     // Ensure positions are sorted and visibility is synced from content
     const [blocks, setBlocks] = useState<Block[]>(initialBlocks.sort((a, b) => a.position - b.position).map(b => ({
@@ -886,6 +943,7 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
     const [config, setConfig] = useState<PageConfig>(initialConfig || {})
     const [isPublished, setIsPublished] = useState(initialPublishedState)
     const [metaTitle, setMetaTitle] = useState(initialMetaTitle || '')
+    const [description, setDescription] = useState(initialDescription || '')
     const [activeId, setActiveId] = useState<string | null>(null)
 
     // Block State
@@ -982,6 +1040,7 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
             if (type === 'map') initialContent = { address: '', label: '', zoom: 15 }
             if (type === 'double-link') initialContent = { links: [{ label: '', url: '' }, { label: '', url: '' }] }
             if (type === 'contact') initialContent = { firstName: '', lastName: '', phone: '', email: '', org: '', jobTitle: '' }
+            if (type === 'internal_link') initialContent = { title: '', targetPageId: '', slug: '' }
 
             const newBlock: Block = {
                 id: crypto.randomUUID(), // Local Temp ID
@@ -1127,7 +1186,8 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
                 .from('pages')
                 .update({
                     is_published: isPublished,
-                    meta_title: metaTitle
+                    meta_title: metaTitle,
+                    description: description
                 })
                 .eq('id', pageId)
 
@@ -1418,6 +1478,30 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
                                 <p className="text-xs text-pv-white-0/40 mt-1">
                                     Si vide, le titre de la page sera utilisé.
                                 </p>
+                            </div>
+
+                            <div className="mt-4">
+                                <label className="block text-xs font-medium text-pv-white-0 uppercase tracking-wide mb-1">
+                                    Description (SEO & Dashboard)
+                                </label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value.slice(0, 180))}
+                                    placeholder="Une brève description de votre page..."
+                                    rows={3}
+                                    className="w-full rounded-md border-gray-100/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 sm:text-sm p-2 border text-pv-white-0 placeholder:text-pv-white-0/80 focus:placeholder-transparent resize-none"
+                                />
+                                <div className="flex justify-between mt-1">
+                                    <p className="text-xs text-pv-white-0/40">
+                                        Cette description apparaît sur votre tableau de bord et dans les moteurs de recherche.
+                                    </p>
+                                    <p className={cn(
+                                        "text-[10px] font-pv-bold uppercase tracking-tight",
+                                        description.length >= 180 ? "text-pv-accent-red" : "text-pv-white-0/40"
+                                    )}>
+                                        {description.length}/180
+                                    </p>
+                                </div>
                             </div>
                         </div>
 

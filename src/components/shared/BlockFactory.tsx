@@ -13,6 +13,7 @@ import { ImageBlock } from './blocks/ImageBlock'
 import { FileBlock } from './blocks/FileBlock'
 import { MapBlock } from './blocks/MapBlock'
 import { ContactBlock } from './blocks/ContactBlock'
+import { InternalLinkBlock } from './blocks/InternalLinkBlock'
 
 interface BlockFactoryProps {
     block: Block
@@ -53,6 +54,9 @@ export function BlockFactory({ block, config }: BlockFactoryProps) {
 
         case 'embed':
             return <EmbedBlock content={block.content as any} config={config} />
+
+        case 'internal_link':
+            return <InternalLinkBlock content={block.content as any} config={config} />
 
         case 'file':
             return <FileBlock content={block.content as any} config={config} />

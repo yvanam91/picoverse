@@ -10,6 +10,8 @@ import { getPlanUsage } from '@/app/dashboard/actions'
 import useSWR from 'swr'
 import type { Project } from '@/types/database'
 
+import BorderGlow from '@/components/ui/BorderGlow'
+
 const IS_PREMIUM = true // Dummy value as requested
 
 interface SidebarProps {
@@ -49,9 +51,20 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
     ]
 
     return (
-        <div id="sidebar" className={`flex flex-col h-full bg-pv-dark-0 text-pv-white-0 border-r border-white-0/10 ${className}`}>
+        <BorderGlow
+            className={`flex flex-col h-full bg-pv-dark-0 text-pv-white-0 ${className}`}
+            backgroundColor="var(--pv-dark-0)"
+            edgeSensitivity={30}
+            glowColor="40 80 80"
+            borderRadius={0}
+            glowRadius={40}
+            glowIntensity={1.0}
+            coneSpread={25}
+            animated={false}
+            colors={['#c084fc', '#f472b6', '#38bdf8']}
+        >
             {/* Header / Project Selector */}
-            <div className="p-4 border-b border-white-0/5 relative">
+            <div className="p-4 relative">
                 <div className="flex items-center gap-3">
                     {/* Logo Analytics Link */}
                     <Link
@@ -149,7 +162,7 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
             </nav>
 
             {/* Plan Usage Section */}
-            <div className="px-5 py-4 border-t border-white-0/5">
+            <div className="px-5 py-4">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-pv-bold text-white-0/40 uppercase tracking-widest">Plan</span>
                     <span className="text-[10px] font-pv-bold text-pv-brand-500 uppercase tracking-widest">{planUsage?.plan || 'Free'}</span>
@@ -199,7 +212,7 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4">
                 <div className="flex items-center justify-between px-2">
                     <Link href="/dashboard/account" className="flex items-center gap-3 text-white-0 hover:bg-pv-gradient-soft rounded-lg p-2 -ml-2 transition-all flex-1 min-w-0 mr-2">
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 shrink-0"></div>
@@ -222,6 +235,6 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
 
 
             <CreateProjectModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
-        </div>
+        </BorderGlow>
     )
 }

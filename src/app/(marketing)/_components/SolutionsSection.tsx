@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Section } from './Section'
 import { LayoutTemplate, WalletCards, Wrench, Palette } from 'lucide-react'
+import BorderGlow from '@/components/ui/BorderGlow'
 
 const TABS = [
     {
@@ -85,24 +86,37 @@ export function SolutionsSection() {
                     <AnimatePresence mode="wait">
                         {TABS.map((tab) => (
                             tab.id === activeTab && (
-                                <motion.div
+                                <BorderGlow
                                     key={tab.id}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="bg-white dark:bg-zinc-800 rounded-2xl p-8 border border-zinc-200 dark:border-zinc-700 shadow-sm h-full flex flex-col justify-center"
+                                    edgeSensitivity={39}
+                                    glowColor="40 80 80"
+                                    backgroundColor="transparent"
+                                    borderRadius={16}
+                                    glowRadius={40}
+                                    glowIntensity={1.5}
+                                    coneSpread={25}
+                                    animated={false}
+                                    colors={['#c084fc', '#f472b6', '#38bdf8']}
+                                    className="h-full"
                                 >
-                                    <div className="w-12 h-12 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 text-[var(--primary)]">
-                                        <tab.icon className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-[var(--foreground)] mb-4">
-                                        {tab.title}
-                                    </h3>
-                                    <p className="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                                        {tab.description}
-                                    </p>
-                                </motion.div>
+                                    <motion.div
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="bg-white dark:bg-zinc-800 rounded-2xl p-8 border border-zinc-200 dark:border-zinc-700 shadow-sm h-full flex flex-col justify-center"
+                                    >
+                                        <div className="w-12 h-12 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 text-[var(--primary)]">
+                                            <tab.icon className="w-6 h-6" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-[var(--foreground)] mb-4">
+                                            {tab.title}
+                                        </h3>
+                                        <p className="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                                            {tab.description}
+                                        </p>
+                                    </motion.div>
+                                </BorderGlow>
                             )
                         ))}
                     </AnimatePresence>
