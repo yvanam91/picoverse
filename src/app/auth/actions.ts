@@ -3,12 +3,45 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { headers, cookies } from 'next/headers'
 import { resend } from '@/lib/resend'
 import { WelcomeEmail } from '../../../emails/welcomeEmail'
 import { ResetPasswordEmail } from '../../../emails/resetPasswordEmail'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { getPostHogClient } from '@/lib/posthog-server'
 
+// --- TYPES ---
+
+export type SignupState = {
+    error?: string
+    success?: boolean
+    message?: string
+}
+
+interface UpdateAccountData {
+    displayName: string
+    email: string
+    oldPassword?: string
+    newPassword?: string
+}
+
+// --- CONSTANTS & HELPERS ---
+
+const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/
+const USERNAME_STRICT_REGEX = /^[a-zA-Z0-9\s\-_'’\u00C0-\u017F]+$/
+
+const normalizeForSlug = (name: string) => {
+    return name
+        .toLowerCase()
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove accents
+        .replace(/['’]/g, "")             // Remove apostrophes
+        .replace(/\s+/g, '_')             // Space -> Underscore
+        .replace(/[^\w-]/g, '');          // Keep only alphanum, _, -
+}
+
+// --- ACTIONS ---
 
 export async function signOut() {
     const supabase = await createClient()
@@ -27,13 +60,6 @@ export async function signOut() {
     redirect('/login')
 }
 
-interface UpdateAccountData {
-    displayName: string
-    email: string
-    oldPassword?: string
-    newPassword?: string
-}
-
 export async function updateAccountSettings(data: UpdateAccountData) {
     const supabase = await createClient()
 
@@ -41,15 +67,10 @@ export async function updateAccountSettings(data: UpdateAccountData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Non authentifié' }
 
-    let passwordUpdateSuccess = true
-
     // 2. Handle Password Change if requested
     if (data.newPassword && data.oldPassword) {
-        // Verify old password by attempting a sign-in shim or just relying on the fact that we are authenticated?
-        // User requested explicit check. Supabase doesn't have "verifyPassword" without sign-in.
-        // We can try signing in with the current email and OLD password.
         const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: user.email!, // Use current verified email from session, NOT the new one
+            email: user.email!,
             password: data.oldPassword
         })
 
@@ -57,7 +78,6 @@ export async function updateAccountSettings(data: UpdateAccountData) {
             return { error: 'L\'ancien mot de passe est incorrect.' }
         }
 
-        // If success, we can proceed to update the password
         const { error: updatePwError } = await supabase.auth.updateUser({ password: data.newPassword })
         if (updatePwError) {
             return { error: `Erreur mot de passe: ${updatePwError.message}` }
@@ -69,7 +89,6 @@ export async function updateAccountSettings(data: UpdateAccountData) {
         data: { full_name: data.displayName }
     }
 
-    // Only update email if changed
     if (data.email !== user.email) {
         updates.email = data.email
     }
@@ -84,42 +103,9 @@ export async function updateAccountSettings(data: UpdateAccountData) {
     return { success: true }
 }
 
-// --- SIGNUP LOGIC ---
-
-export type SignupState = {
-    error?: string
-    success?: boolean
-    message?: string
-}
-
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/
-const USERNAME_STRICT_REGEX = /^[a-zA-Z0-9\s\-_'’\u00C0-\u017F]+$/ // For server-side check of allowed chars
-
-// Helper to normalize slug on server side (same logic as client)
-const normalizeForSlug = (name: string) => {
-    return name
-        .toLowerCase()
-        .trim()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove accents
-        .replace(/['’]/g, "")             // Remove apostrophes
-        .replace(/\s+/g, '_')             // Space -> Underscore
-        .replace(/[^\w-]/g, '');          // Keep only alphanum, _, -
-}
-
-import { headers, cookies } from 'next/headers'
-
 export async function checkUsernameAvailability(username: string): Promise<{ available: boolean; error?: string }> {
     if (!username) return { available: false, error: 'Nom d\'utilisateur requis' }
-
-    // Check length (client checks strict chars, server checks length)
-    // We can also check strict chars here just in case
-    // Note: The input 'username' here might be the raw one or normalized one depending on who calls it.
-    // The client calls this with the *normalized* slug for availability check.
-
     if (username.length < 3) return { available: false, error: 'Trop court (3 min)' }
-
-    // We assume check is done on the Slug
     if (!USERNAME_REGEX.test(username)) return { available: false, error: 'Caractères invalides (lettres, chiffres, - et _ uniquement)' }
 
     const supabase = await createClient()
@@ -144,7 +130,6 @@ export async function checkUsernameAvailability(username: string): Promise<{ ava
 export async function checkEmailAvailability(email: string): Promise<{ available: boolean; error?: string }> {
     if (!email) return { available: false, error: 'Email requis' }
 
-    // Basic format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) return { available: false, error: 'Format d\'email invalide' }
 
@@ -157,7 +142,6 @@ export async function checkEmailAvailability(email: string): Promise<{ available
 
     if (error && error.code !== 'PGRST116') {
         console.error('Error checking email:', error)
-        // On ne bloque pas l'utilisateur si la vérification échoue techniquement
         return { available: true }
     }
 
@@ -169,172 +153,176 @@ export async function checkEmailAvailability(email: string): Promise<{ available
 }
 
 export async function signUp(prevState: SignupState, formData: FormData): Promise<SignupState> {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
-    const rawUsername = formData.get('username') as string // This is likely the normalized one from client, BUT user asked to send raw?
-    // Wait, client sends: formData.set('username', normalizedUsername).
-    // The USER REQUEST says: "Reçoit l'email, le mot de passe et le username (non-normalisé)."
-    // So I must update the client to send the RAW username, OR handle the fact it sends normalized.
-    // If client sends normalized, I can't store "display name" easily unless I send "display_name" separately.
-    // Let's assume I should update the client to send 'username' as RAW, or 'display_name' as RAW.
-    // Standard approach: Form has 'username' input. User types "Jean-Marc".
-    // Client onSubmit currently does: formData.set('username', normalizedUsername).
-    // I SHOULD CHANGE CLIENT to send: formData.set('username', rawUsername) AND maybe formData.set('slug', normalizedUsername).
-    // OR, server receives 'username' (raw), and normalizes it itself.
-
-    // Let's stick to the prompt: "Reçoit l'email, le mot de passe et le username (non-normalisé)."
-    // So I will update client to NOT overwrite 'username' with normalized one in FormData.
-
-    const rgpd = formData.get('rgpd')
-
-    if (!email || !password || !rawUsername) {
-        return { error: 'Tous les champs sont requis' }
-    }
-
-    if (password !== confirmPassword) {
-        return { error: 'Les mots de passe ne correspondent pas' }
-    }
-
-    if (!rgpd) {
-        return { error: 'Vous devez accepter les conditions (RGPD)' }
-    }
-
-    // Password strength
-    const hasUpperCase = /[A-Z]/.test(password)
-    const hasLowerCase = /[a-z]/.test(password)
-    const isLongEnough = password.length >= 10
-    if (!hasUpperCase || !hasLowerCase || !isLongEnough) {
-        return { error: 'Le mot de passe ne respecte pas les critères de sécurité' }
-    }
-
-    // Normalize Username for Slug
-    const normalizedUsername = normalizeForSlug(rawUsername)
-
-    // Check Availability (on the SLUG)
-    const usernameCheck = await checkUsernameAvailability(normalizedUsername)
-    if (!usernameCheck.available) {
-        return { error: usernameCheck.error || 'Ce nom d\'utilisateur est déjà pris' }
-    }
-
-    const emailCheck = await checkEmailAvailability(email)
-    if (!emailCheck.available) {
-        return { error: emailCheck.error || 'Cet email est déjà utilisé' }
-    }
-
-    const supabase = await createClient()
-
-    // options: { emailRedirectTo: 'https://picover.se/login?verified=true' }
-    // Metadata : Enregistre le username normalisé et le nom d'affichage dans user_metadata.
-
-    const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            emailRedirectTo: 'https://picover.se/login?verified=true',
-            data: {
-                username: normalizedUsername, // The slug
-                full_name: rawUsername,       // The original input (mapped to profiles.full_name via trigger)
-                // Keeping display_name for backward compatibility if needed, but full_name is the primary target now
-                display_name: rawUsername
-            },
-        },
-    })
-
-    if (error) {
-        return { error: error.message }
-    }
-
-    // Track signup server-side
-    const posthog = getPostHogClient()
-    posthog.capture({
-        distinctId: email,
-        event: 'user_signed_up',
-        properties: {
-            username: normalizedUsername,
-            email,
-        },
-    })
-
-    // Envoi de l'e-mail de bienvenue via Resend
     try {
-        await resend.emails.send({
-            from: process.env.NEXT_PUBLIC_EMAIL_FROM || 'Picoverse <onboarding@resend.dev>',
-            to: email,
-            subject: "Bienvenue dans l'univers Picoverse 🚀",
-            react: WelcomeEmail({ firstName: normalizedUsername }),
-        });
-    } catch (emailError) {
-        // On log l'erreur mais on ne bloque pas l'inscription
-        console.error('Erreur lors de l\'envoi de l\'e-mail de bienvenue:', emailError);
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
+        const confirmPassword = formData.get('confirmPassword') as string
+        const rawUsername = formData.get('username') as string
+        const rgpd = formData.get('rgpd')
+
+        if (!email || !password || !rawUsername) {
+            return { error: 'Tous les champs sont requis' }
+        }
+
+        if (password !== confirmPassword) {
+            return { error: 'Les mots de passe ne correspondent pas' }
+        }
+
+        if (!rgpd) {
+            return { error: 'Vous devez accepter les conditions (RGPD)' }
+        }
+
+        // Password strength
+        const hasUpperCase = /[A-Z]/.test(password)
+        const hasLowerCase = /[a-z]/.test(password)
+        const isLongEnough = password.length >= 10
+        if (!hasUpperCase || !hasLowerCase || !isLongEnough) {
+            return { error: 'Le mot de passe ne respecte pas les critères de sécurité' }
+        }
+
+        // Normalize Username for Slug
+        const normalizedUsername = normalizeForSlug(rawUsername)
+
+        // Check Availability (on the SLUG)
+        const usernameCheck = await checkUsernameAvailability(normalizedUsername)
+        if (!usernameCheck.available) {
+            return { error: usernameCheck.error || 'Ce nom d\'utilisateur est déjà pris' }
+        }
+
+        const emailCheck = await checkEmailAvailability(email)
+        if (!emailCheck.available) {
+            return { error: emailCheck.error || 'Cet email est déjà utilisé' }
+        }
+
+        const supabase = await createClient()
+
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                emailRedirectTo: 'https://picover.se/login?verified=true',
+                data: {
+                    username: normalizedUsername,
+                    full_name: rawUsername,
+                    display_name: rawUsername
+                },
+            },
+        })
+
+        if (error) {
+            return { error: error.message }
+        }
+
+        // Track signup server-side
+        try {
+            const posthog = getPostHogClient()
+            posthog.capture({
+                distinctId: email,
+                event: 'user_signed_up',
+                properties: {
+                    username: normalizedUsername,
+                    email,
+                },
+            })
+        } catch (phError) {
+            console.error('PostHog error:', phError)
+        }
+
+        // Envoi de l'e-mail de bienvenue via Resend
+        try {
+            await resend.emails.send({
+                from: process.env.NEXT_PUBLIC_EMAIL_FROM || 'Picoverse <onboarding@resend.dev>',
+                to: email,
+                subject: "Bienvenue dans l'univers Picoverse 🚀",
+                react: WelcomeEmail({ firstName: rawUsername }),
+            });
+        } catch (emailError) {
+            console.error('Erreur lors de l\'envoi de l\'e-mail de bienvenue:', emailError);
+        }
+
+        // Set recognized cookie
+        try {
+            const cookieStore = await cookies()
+            cookieStore.set('recognized', 'true', {
+                maxAge: 60 * 60 * 24 * 30, // 30 days
+                path: '/',
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+            })
+        } catch (cookieError) {
+            console.error('Cookie error:', cookieError)
+        }
+
+        return { success: true, message: `Un lien de confirmation a été envoyé à ${email}.` }
+    } catch (err: any) {
+        console.error('Unhandled signUp error:', err)
+        return { error: "Une erreur inattendue est survenue lors de l'inscription." }
     }
-
-
-    // Set recognized cookie
-    const cookieStore = await cookies()
-    cookieStore.set('recognized', 'true', {
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-    })
-
-
-    return { success: true, message: `Un lien de confirmation a été envoyé à ${email}.` }
 }
 
 export async function signIn(prevState: { error?: string }, formData: FormData) {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+    let success = false
+    try {
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
 
-    if (!email || !password) {
-        return { error: 'Email et mot de passe requis' }
-    }
-
-    const supabase = await createClient()
-
-    const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-    })
-
-    if (error) {
-        if (error.message.includes('Email not confirmed')) {
-            return { error: 'Veuillez confirmer votre adresse e-mail pour accéder à votre dashboard.' }
+        if (!email || !password) {
+            return { error: 'Email et mot de passe requis' }
         }
-        return { error: 'Identifiants incorrects' }
+
+        const supabase = await createClient()
+
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
+
+        if (error) {
+            if (error.message.includes('Email not confirmed')) {
+                return { error: 'Veuillez confirmer votre adresse e-mail pour accéder à votre dashboard.' }
+            }
+            return { error: 'Identifiants incorrects' }
+        }
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+            try {
+                const posthog = getPostHogClient()
+                posthog.identify({
+                    distinctId: user.id,
+                    properties: { email: user.email },
+                })
+                posthog.capture({
+                    distinctId: user.id,
+                    event: 'user_logged_in',
+                    properties: { email: user.email },
+                })
+            } catch (phError) {
+                console.error('PostHog error in signIn:', phError)
+            }
+        }
+
+        const cookieStore = await cookies()
+        cookieStore.set('recognized', 'true', {
+            maxAge: 60 * 60 * 24 * 30, // 30 days
+            path: '/',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+        })
+
+        revalidatePath('/', 'layout')
+        success = true
+    } catch (err: any) {
+        console.error('Unhandled signIn error:', err)
+        return { error: "Une erreur inattendue est survenue lors de la connexion." }
     }
 
-    // Get user after successful login for server-side tracking
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-        const posthog = getPostHogClient()
-        posthog.identify({
-            distinctId: user.id,
-            properties: { email: user.email },
-        })
-        posthog.capture({
-            distinctId: user.id,
-            event: 'user_logged_in',
-            properties: { email: user.email },
-        })
+    if (success) {
+        redirect('/dashboard')
     }
-
-    // Set recognized cookie
-    const cookieStore = await cookies()
-    cookieStore.set('recognized', 'true', {
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-    })
-
-    revalidatePath('/', 'layout')
-    redirect('/dashboard')
 }
-
 
 // --- FORGOT & RESET PASSWORD ---
 
@@ -345,7 +333,6 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     const supabase = await createClient()
     const admin = createAdminClient()
 
-    // 1. Get user profile
     const { data: profile } = await supabase
         .from('profiles')
         .select('username')
@@ -354,22 +341,17 @@ export async function forgotPassword(prevState: any, formData: FormData) {
 
     const firstName = profile?.username || 'Utilisateur'
 
-    // 2. Generate link
     const { data, error } = await admin.auth.admin.generateLink({
         type: 'recovery',
         email: email,
     })
 
     if (error) {
-        // En cas d'erreur (ex: utilisateur non trouvé), on renvoie quand même un succès
-        // pour éviter la découverte d'emails (security best practice).
         return { success: true, message: 'Surveille tes mails, tu recevras vite un lien pour modifier ton mot de passe si un compte est associé à cette adresse' }
     }
 
-    // Lien robuste pour Next.js utilisant le token_hash
     const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/confirm?token_hash=${data.properties.hashed_token}&type=recovery&next=/auth/reset-password`
 
-    // 3. Send via Resend
     try {
         await resend.emails.send({
             from: process.env.NEXT_PUBLIC_EMAIL_FROM || 'Picoverse <onboarding@resend.dev>',
@@ -406,7 +388,6 @@ export async function resetPassword(prevState: any, formData: FormData) {
         return { error: 'Les mots de passe ne correspondent pas' }
     }
 
-    // Password strength check
     if (password.length < 10) {
         return { error: 'Le mot de passe doit faire au moins 10 caractères' }
     }
