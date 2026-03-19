@@ -119,6 +119,12 @@ export default function SignupPage() {
 
         const result = await signUp({}, formData)
 
+        if (!result) {
+            toast.error("Une erreur inattendue est survenue.")
+            setLoading(false)
+            return
+        }
+
         if (result.error) {
             toast.error(result.error)
             setLoading(false)
