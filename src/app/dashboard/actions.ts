@@ -7,6 +7,7 @@ import { PLAN_LIMITS, getPlanLimits } from '@/utils/plan-limits'
 import type { Block, PageConfig, Project, BlockType, Theme, Page } from '@/types/database'
 import { normalizeSlug } from '@/lib/utils'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { DEFAULT_THEME, SYSTEM_THEME_ID } from '@/lib/constants'
 
 export async function deleteProject(projectId: string) {
     console.log('--- Attempting to delete project:', projectId)
@@ -161,14 +162,32 @@ export async function createProject(formData: FormData) {
         redirect('/login')
     }
 
-    // --- PLAN LIMIT CHECK (DYNAMIC) ---
-    const { data: profile } = await supabase
+    // --- SECURE PROFILE ---
+    let profile = null
+    const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('plan')
+        .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
+    
+    if (!existingProfile) {
+        console.log('--- Missing profile in createProject, creating it... ---')
+        const metadata = user.user_metadata || {}
+        const username = metadata.username || user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`
+        const { data: newProfile, error: profileError } = await supabase.from('profiles').insert({
+            id: user.id,
+            username: username,
+            full_name: metadata.full_name || metadata.display_name || username,
+            plan: 'free'
+        }).select().single()
+        
+        if (profileError) throw new Error(`Profile creation failed: ${profileError.message}`)
+        profile = newProfile
+    } else {
+        profile = existingProfile
+    }
 
-    const planName = profile?.plan || 'free'
+    const planName = (profile?.plan || 'free').toLowerCase()
     const { data: planConfig } = await supabase
         .from('plan_config')
         .select('*')
@@ -244,45 +263,6 @@ export async function createProject(formData: FormData) {
 
     revalidatePath('/dashboard')
 
-    // 3. Create Default Theme automatically
-    const defaultThemeConfig: PageConfig = {
-        colors: {
-            background: '#ffffff',
-            outerBackground: '#ffffff',
-            primary: '#000000',
-            secondary: '#e5e7eb',
-            text: '#1f2937',
-            link: '#000000',
-            buttonText: '#ffffff'
-        },
-        typography: { fontFamily: 'Inter, sans-serif' },
-        borders: { radius: '8px', width: '1px', style: 'solid' },
-        dividers: { style: 'solid', width: '1px', color: '#e5e7eb' }
-    }
-
-    const { data: themeData, error: themeError } = await supabase.from('themes').insert({
-        name: 'Défaut',
-        config: defaultThemeConfig,
-        user_id: user.id,
-        project_id: data.id
-    }).select().single()
-
-    if (themeError) {
-        console.error('Failed to create default theme:', themeError)
-    } else if (themeData) {
-        // 4. Set as Default Theme for Project
-        const { error: updateError } = await supabase
-            .from('projects')
-            .update({ default_theme_id: themeData.id })
-            .eq('id', data.id)
-
-        if (updateError) {
-            console.error('Failed to update project default_theme_id:', updateError)
-        } else {
-            console.log('Project created with default theme:', themeData.id)
-        }
-    }
-
     return { data }
 }
 
@@ -321,7 +301,7 @@ export async function createPage(projectId: string, formData: FormData) {
             .eq('id', user.id)
             .single()
 
-        const planName = profile?.plan || 'free'
+        const planName = (profile?.plan || 'free').toLowerCase()
         const { data: planConfig } = await supabase
             .from('plan_config')
             .select('*')
@@ -353,15 +333,16 @@ export async function createPage(projectId: string, formData: FormData) {
             .single()
 
         // 2. Get Theme Config (Inheritance)
-        let themeConfig = {}
-        if (project?.default_theme_id) {
-            const { data: theme } = await supabase
-                .from('themes')
-                .select('config')
-                .eq('id', project.default_theme_id)
-                .single()
-            themeConfig = theme?.config || {}
-        }
+        let themeConfig = DEFAULT_THEME
+        let effectiveThemeId = project?.default_theme_id || SYSTEM_THEME_ID
+
+        const { data: theme } = await supabase
+            .from('themes')
+            .select('config')
+            .eq('id', effectiveThemeId)
+            .maybeSingle()
+        
+        themeConfig = theme?.config || DEFAULT_THEME
 
         console.log('--- Creating Page ---')
         console.log('Project ID:', projectId)
@@ -373,7 +354,7 @@ export async function createPage(projectId: string, formData: FormData) {
             slug,
             description,
             config: themeConfig, // Inject inherited config
-            theme_id: project?.default_theme_id // Link to theme
+            theme_id: effectiveThemeId // Link to theme (Project Default or System)
         }).select().single()
 
         if (error) {
@@ -616,7 +597,7 @@ export async function updateBlockPositions(projectId: string, pageId: string, up
         revalidatePath(`/dashboard/${projectId}/${pageId}`)
         if (project.slug) {
             // Fetch username for revalidation path
-            const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).single()
+            const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle()
             if (profile?.username) {
                 revalidatePath(`/p/${profile.username}/${project.slug}`)
 
@@ -718,7 +699,7 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
         .select('*')
         .eq('slug', slug)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     return project as Project
 }
@@ -774,12 +755,41 @@ export async function deletePage(projectId: string, pageId: string) {
     return { success: true }
 }
 
-export async function updateTheme(themeId: string, name: string, config: PageConfig) {
+export async function updateTheme(themeId: string, name: string, config: PageConfig, projectId?: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return { error: 'Unauthorized' }
 
+    // If it's the system theme, we create a NEW theme for this project
+    if (themeId === SYSTEM_THEME_ID && projectId) {
+        const { data: newTheme, error: insertError } = await supabase
+            .from('themes')
+            .insert({
+                name,
+                config,
+                user_id: user.id,
+                project_id: projectId
+            })
+            .select()
+            .single()
+
+        if (insertError) {
+            console.error('Failed to clone system theme to project:', insertError)
+            return { error: insertError.message }
+        }
+
+        // Update project to use this new theme as default
+        await supabase
+            .from('projects')
+            .update({ default_theme_id: newTheme.id })
+            .eq('id', projectId)
+
+        revalidatePath('/dashboard')
+        return { success: true, theme: newTheme, isNew: true }
+    }
+
+    // Normal update
     const { error } = await supabase
         .from('themes')
         .update({ name, config })
@@ -806,7 +816,7 @@ export async function deleteTheme(themeId: string) {
         .select('id, user_id')
         .eq('id', themeId)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (!theme) return { error: 'Unauthorized or Theme not found' }
 
@@ -833,12 +843,13 @@ export async function applyThemeToProject(projectId: string, themeId: string) {
     if (!user) return { error: 'Unauthorized' }
 
     // Verify ownership
+    // Verify ownership
     const { data: project } = await supabase
         .from('projects')
         .select('id')
         .eq('id', projectId)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (!project) return { error: 'Unauthorized' }
 
@@ -929,8 +940,8 @@ export async function updateProjectContent(projectId: string, pageId: string, bl
         }
 
         // 4. Revalidation
-        const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).single()
-        const { data: page } = await supabase.from('pages').select('slug').eq('id', pageId).single()
+        const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle()
+        const { data: page } = await supabase.from('pages').select('slug').eq('id', pageId).maybeSingle()
 
         // Correction du chemin de revalidation: /dashboard/[slug]/pages/[id]
         revalidatePath(`/dashboard/${project.slug}/pages/${pageId}`)

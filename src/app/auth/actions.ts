@@ -4,10 +4,6 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { headers, cookies } from 'next/headers'
-import { resend } from '@/lib/resend'
-import { WelcomeEmail } from '../../../emails/welcomeEmail'
-import { ResetPasswordEmail } from '../../../emails/resetPasswordEmail'
-import { createAdminClient } from '@/utils/supabase/admin'
 import { getPostHogClient } from '@/lib/posthog-server'
 
 // --- TYPES ---
@@ -127,30 +123,8 @@ export async function checkUsernameAvailability(username: string): Promise<{ ava
     return { available: true }
 }
 
-export async function checkEmailAvailability(email: string): Promise<{ available: boolean; error?: string }> {
-    if (!email) return { available: false, error: 'Email requis' }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) return { available: false, error: 'Format d\'email invalide' }
-
-    const supabase = await createClient()
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .single()
-
-    if (error && error.code !== 'PGRST116') {
-        console.error('Error checking email:', error)
-        return { available: true }
-    }
-
-    if (data) {
-        return { available: false, error: 'Cette adresse e-mail est déjà associée à un compte.' }
-    }
-
-    return { available: true }
-}
+// checkEmailAvailability was removed as profiles.email does not exist.
+// Supabase auth.signUp handles email uniqueness.
 
 export async function signUp(prevState: AuthState, formData: FormData): Promise<AuthState> {
     try {
@@ -189,10 +163,8 @@ export async function signUp(prevState: AuthState, formData: FormData): Promise<
             return { error: usernameCheck.error || 'Ce nom d\'utilisateur est déjà pris' }
         }
 
-        const emailCheck = await checkEmailAvailability(email)
-        if (!emailCheck.available) {
-            return { error: emailCheck.error || 'Cet email est déjà utilisé' }
-        }
+        // Email availability check on profiles removed as column does not exist.
+        // auth.signUp will handle duplicates natively.
 
         const supabase = await createClient()
 
@@ -226,18 +198,6 @@ export async function signUp(prevState: AuthState, formData: FormData): Promise<
             })
         } catch (phError) {
             console.error('PostHog error:', phError)
-        }
-
-        // Envoi de l'e-mail de bienvenue via Resend
-        try {
-            await resend.emails.send({
-                from: process.env.NEXT_PUBLIC_EMAIL_FROM || 'Picoverse <onboarding@resend.dev>',
-                to: email,
-                subject: "Bienvenue dans l'univers Picoverse 🚀",
-                react: WelcomeEmail({ firstName: rawUsername }),
-            });
-        } catch (emailError) {
-            console.error('Erreur lors de l\'envoi de l\'e-mail de bienvenue:', emailError);
         }
 
         // Set recognized cookie
@@ -287,6 +247,34 @@ export async function signIn(prevState: AuthState, formData: FormData): Promise<
 
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+            // Check if profile exists (Safe guard for existing users or failed signup flows)
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', user.id)
+                .single()
+
+            if (!profile) {
+                console.log('Profile missing for user, creating it from metadata...')
+                const metadata = user.user_metadata
+                
+                // Construct a username if missing (unlikely but safe)
+                const username = metadata.username || user.email?.split('@')[0] || `user_${user.id.slice(0, 5)}`
+
+                const { error: insertError } = await supabase.from('profiles').insert({
+                    id: user.id,
+                    username: username,
+                    full_name: metadata.full_name || metadata.display_name || username,
+                    plan: 'free', // Normalized lowercase
+                })
+
+                if (insertError) {
+                    console.error('Error creating missing profile during login:', insertError)
+                } else {
+                    console.log('Profile created successfully for:', user.email)
+                }
+            }
+
             try {
                 const posthog = getPostHogClient()
                 posthog.identify({
@@ -331,49 +319,29 @@ export async function forgotPassword(prevState: any, formData: FormData) {
     if (!email) return { error: 'Email requis' }
 
     const supabase = await createClient()
-    const admin = createAdminClient()
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('email', email)
-        .single()
-
-    const firstName = profile?.username || 'Utilisateur'
-
-    const { data, error } = await admin.auth.admin.generateLink({
-        type: 'recovery',
-        email: email,
+    // Supabase will handle sending the recovery email using the template configured in the dashboard
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
     })
 
     if (error) {
-        return { success: true, message: 'Surveille tes mails, tu recevras vite un lien pour modifier ton mot de passe si un compte est associé à cette adresse' }
+        console.error('Error sending reset email via Supabase:', error)
+        // We still return success: true for security (preventing account enumeration)
     }
-
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/confirm?token_hash=${data.properties.hashed_token}&type=recovery&next=/auth/reset-password`
 
     try {
-        await resend.emails.send({
-            from: process.env.NEXT_PUBLIC_EMAIL_FROM || 'Picoverse <onboarding@resend.dev>',
-            to: email,
-            subject: "Réinitialisation de ton mot de passe Picoverse 🔒",
-            react: ResetPasswordEmail({
-                firstName,
-                resetLink: resetLink
-            }),
-        });
-    } catch (err) {
-        console.error('Error sending reset email:', err)
+        const posthog = getPostHogClient()
+        posthog.capture({
+            distinctId: email,
+            event: 'password_reset_requested',
+            properties: { email },
+        })
+    } catch (phError) {
+        console.error('PostHog error in forgotPassword:', phError)
     }
 
-    const posthog = getPostHogClient()
-    posthog.capture({
-        distinctId: email,
-        event: 'password_reset_requested',
-        properties: { email },
-    })
-
-    return { success: true, message: 'Surveille tes mails, tu recevras vite un lien pour modifier ton mot de passe si un compte est associé à cette adresse' }
+    return { success: true, message: 'Surveille tes mails, tu recevras vite un lien pour modifier ton mot de passe si un compte est associé à cette adresse.' }
 }
 
 export async function resetPassword(prevState: any, formData: FormData) {

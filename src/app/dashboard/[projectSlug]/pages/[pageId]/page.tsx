@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { SYSTEM_THEME_ID } from '@/lib/constants'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { BlockEditor } from '@/components/dashboard/BlockEditor'
 import type { Page, Project, Block } from '@/types/database'
@@ -51,12 +52,14 @@ export default async function EditorPage({
 
     // Fetch Default Theme if page has none
     let defaultTheme = null
-    if (!(page as any).theme && project.default_theme_id) {
+    const effectiveThemeId = project.default_theme_id || SYSTEM_THEME_ID
+    
+    if (!(page as any).theme) {
         const { data: dt } = await supabase
             .from('themes')
             .select('*')
-            .eq('id', project.default_theme_id)
-            .single()
+            .eq('id', effectiveThemeId)
+            .maybeSingle()
         defaultTheme = dt
     }
 
@@ -79,7 +82,7 @@ export default async function EditorPage({
                         </div>
                         {username && (
                             <Link
-                                href={`/p/${username}/${project.slug}/${page.slug}`}
+                                href={`/${username}/${project.slug}/${page.slug}`}
                                 target="_blank"
                                 className="inline-flex items-center gap-2 rounded-md bg-transparent border border-pv-brand-500 px-3 py-2 text-pv-12 font-pv-inter font-pv-bold text-pv-brand-500 hover:bg-pv-brand-500/10 transition-colors"
                             >

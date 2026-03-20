@@ -102,7 +102,7 @@ export function PageCard({ page, projectSlug, onDelete, username }: PageCardProp
                 <div className="flex gap-2">
                     {username && (
                         <a
-                            href={`/p/${username}/${projectSlug}/${page.slug}`}
+                            href={`/${username}/${projectSlug}/${page.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-2 text-white-0/40 hover:text-pv-brand-500 hover:bg-pv-brand-500/10 rounded-full transition-colors"

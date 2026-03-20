@@ -21,7 +21,7 @@ export default async function PagesPage({
     const { data: { user } } = await supabase.auth.getUser()
     let username = null
     if (user) {
-        const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).single()
+        const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle()
         username = profile?.username
     }
 
