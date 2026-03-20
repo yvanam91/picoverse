@@ -1,13 +1,13 @@
 'use client'
 
-import { Folder, ArrowRight, Trash2, Loader2 } from 'lucide-react'
+import { Folder, ArrowRight, Trash2, Loader2, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import type { Project } from '@/types/database'
 import { useState } from 'react'
 import { deleteProject } from './actions'
 import { toast } from 'sonner'
 
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({ project, username }: { project: Project, username: string | null }) {
     const [isDeleting, setIsDeleting] = useState(false)
 
     const handleDelete = async (e: React.MouseEvent) => {
@@ -63,7 +63,18 @@ export function ProjectCard({ project }: { project: Project }) {
             </div>
 
             <div className="mt-4 flex flex-1 flex-col justify-between">
-                <div className="mt-6 flex items-center justify-end">
+                <div className="mt-6 flex items-center justify-end gap-4">
+                    {username && (
+                        <a
+                            href={`/${username}/${project.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-semibold leading-6 text-pv-brand-500 hover:text-pv-brand-400 flex items-center gap-1 group"
+                        >
+                            <ExternalLink className="h-4 w-4" />
+                            Voir en ligne
+                        </a>
+                    )}
                     <Link
                         href={`/dashboard/${project.slug}/pages`}
                         className="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500 flex items-center gap-1 group"

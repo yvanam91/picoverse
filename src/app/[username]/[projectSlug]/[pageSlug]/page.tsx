@@ -7,6 +7,7 @@ import { BlockFactory } from '@/components/shared/BlockFactory'
 import { getBoxShadow, cn } from '@/lib/utils'
 import { fontMap } from '@/styles/fonts'
 import { AnalyticsTracker } from '@/components/public/AnalyticsTracker'
+import { DEFAULT_THEME } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -92,52 +93,53 @@ export default async function PublicPage({
         redirect('/')
     }
 
-    // Theme Inheritance Logic (Phase 1 & 3)
-    const DEFAULT_CONFIG: PageConfig = {
-        colors: {
-            background: '#ffffff',
-            outerBackground: '#0a0a0a',
-            primary: '#000000',
-            secondary: '#e5e7eb',
-            text: '#1f2937',
-            link: '#000000',
-            buttonText: '#ffffff'
-        },
-        typography: { fontFamily: 'inter' },
-        borders: { radius: '8px', width: '1px', style: 'solid' },
-        dividers: { style: 'solid', width: '1px', color: '#e5e7eb' },
-        buttonStyle: 'rounded-md',
-        buttonVariant: 'fill'
-    }
 
     let themeConfig = page.theme?.config || page.config
 
     const isConfigEmpty = !themeConfig || (typeof themeConfig === 'object' && Object.keys(themeConfig).length === 0)
 
-    if (isConfigEmpty && !page.theme_id && data.project.default_theme_id) {
+    if (isConfigEmpty) {
         const supabase = await createClient()
-        const { data: defaultTheme } = await supabase
-            .from('themes')
-            .select('config')
-            .eq('id', data.project.default_theme_id)
-            .single()
+        const SYSTEM_THEME_ID = '00000000-0000-0000-0000-000000000000'
+        
+        // 1. Try Project Default Theme
+        if (data.project.default_theme_id) {
+            const { data: defaultTheme } = await supabase
+                .from('themes')
+                .select('config')
+                .eq('id', data.project.default_theme_id)
+                .maybeSingle()
 
-        if (defaultTheme) {
-            themeConfig = defaultTheme.config
+            if (defaultTheme) {
+                themeConfig = defaultTheme.config
+            }
+        }
+        
+        // 2. Fallback to System Theme if still empty
+        if (!themeConfig || (typeof themeConfig === 'object' && Object.keys(themeConfig).length === 0)) {
+            const { data: systemTheme } = await supabase
+                .from('themes')
+                .select('config')
+                .eq('id', SYSTEM_THEME_ID)
+                .maybeSingle()
+            
+            if (systemTheme) {
+                themeConfig = systemTheme.config
+            }
         }
     }
 
-    const effectiveConfig = (themeConfig || DEFAULT_CONFIG) as PageConfig
+    const effectiveConfig = (themeConfig || DEFAULT_THEME) as PageConfig
 
     // Dynamic Style Injection
     const themeStyles = {
-        '--pico-bg': effectiveConfig.colors?.background || DEFAULT_CONFIG.colors!.background,
-        '--pico-outer-bg': effectiveConfig.colors?.outerBackground || DEFAULT_CONFIG.colors!.outerBackground,
-        '--pico-primary': effectiveConfig.colors?.primary || DEFAULT_CONFIG.colors!.primary,
-        '--pico-secondary': effectiveConfig.colors?.secondary || DEFAULT_CONFIG.colors!.secondary,
-        '--pico-text': effectiveConfig.colors?.text || DEFAULT_CONFIG.colors!.text,
-        '--pico-link': effectiveConfig.colors?.link || DEFAULT_CONFIG.colors!.link,
-        '--pico-btn-text': effectiveConfig.colors?.buttonText || DEFAULT_CONFIG.colors!.buttonText,
+        '--pico-bg': effectiveConfig.colors?.background || DEFAULT_THEME.colors!.background,
+        '--pico-outer-bg': effectiveConfig.colors?.outerBackground || DEFAULT_THEME.colors!.outerBackground,
+        '--pico-primary': effectiveConfig.colors?.primary || DEFAULT_THEME.colors!.primary,
+        '--pico-secondary': effectiveConfig.colors?.secondary || DEFAULT_THEME.colors!.secondary,
+        '--pico-text': effectiveConfig.colors?.text || DEFAULT_THEME.colors!.text,
+        '--pico-link': effectiveConfig.colors?.link || DEFAULT_THEME.colors!.link,
+        '--pico-btn-text': effectiveConfig.colors?.buttonText || DEFAULT_THEME.colors!.buttonText,
         '--pico-font': fontMap[effectiveConfig.typography?.fontFamily || 'inter'] || 'var(--font-inter)',
 
         '--pico-radius': effectiveConfig.borders?.radius || '8px',

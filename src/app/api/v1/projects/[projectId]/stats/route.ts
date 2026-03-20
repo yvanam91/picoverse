@@ -39,9 +39,9 @@ export async function GET(
         .from('daily_project_stats')
         .select('*')
         .eq('project_id', projectId)
-        .gte('date', format(startDate, 'yyyy-MM-dd'))
-        .lte('date', format(endDate, 'yyyy-MM-dd'))
-        .order('date', { ascending: true })
+        .gte('day', format(startDate, 'yyyy-MM-dd'))
+        .lte('day', format(endDate, 'yyyy-MM-dd'))
+        .order('day', { ascending: true })
 
     if (statsError) {
         console.error('Erreur lors de la récupération des stats:', statsError)
@@ -98,9 +98,9 @@ export async function GET(
 
     dailyResults?.forEach(row => {
         // visits by date aggregation
-        const current = statsMap.get(row.date) || 0
+        const current = statsMap.get(row.day) || 0
         const count = row.visit_count || row.total_visits || 0
-        statsMap.set(row.date, current + count)
+        statsMap.set(row.day, current + count)
 
         // devices aggregation (much more efficient than fetching all rows)
         const d = row.device as string

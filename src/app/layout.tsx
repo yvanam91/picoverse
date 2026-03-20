@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import "@/components/ui/BorderGlow.css";
+import "@/components/dashboard/Sidebar.css";
 import { Toaster } from 'sonner';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 

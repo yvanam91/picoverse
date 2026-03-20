@@ -17,7 +17,7 @@ export default async function AccountPage() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
     // Priority: Profile Full Name > Metadata Display Name > Username > Email Part > Fallback
     const fullName = profile?.full_name || user.user_metadata?.display_name || ''

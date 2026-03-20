@@ -18,7 +18,7 @@ export default async function AccountLayout({
     }
 
     // Get user details for sidebar
-    const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle()
     const username = profile?.username
 
     // Fetch user's projects for sidebar logic

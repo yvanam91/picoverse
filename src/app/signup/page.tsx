@@ -5,12 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Loader2, Check, X, Mail } from 'lucide-react' // Added Mail icon
 import { toast } from 'sonner'
-import { checkUsernameAvailability, checkEmailAvailability, signUp } from '../auth/actions' // Updated import
+import { checkUsernameAvailability, signUp } from '../auth/actions' // Updated import
 
 const normalizeForSlug = (name: string) => {
-    return name
-
-
     return name
         .toLowerCase()
         .trim()
@@ -70,7 +67,7 @@ export default function SignupPage() {
     const handleEmailBlur = async () => {
         if (!email) return
 
-        // Basic format check before server call
+        // Basic format check
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(email)) {
             setEmailError('Format d\'email invalide')
@@ -78,21 +75,11 @@ export default function SignupPage() {
             return
         }
 
-        setIsEmailChecking(true)
-        const result = await checkEmailAvailability(email)
-        setIsEmailChecking(false)
-
-        if (!result.available) {
-            setEmailError(result.error || 'Email non disponible')
-            setIsEmailValid(false)
-        } else {
-            setEmailError(null)
-            setIsEmailValid(true)
-        }
+        setEmailError(null)
+        setIsEmailValid(true)
     }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-
         e.preventDefault()
         setLoading(true)
 
@@ -103,11 +90,10 @@ export default function SignupPage() {
         }
 
         if (!isEmailValid) {
-            // If user submits without blurring, trigger check
-            const result = await checkEmailAvailability(email)
-            if (!result.available) {
-                setEmailError(result.error || 'Email non disponible')
-                toast.error(result.error || 'Email invalide')
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!emailRegex.test(email)) {
+                setEmailError('Format d\'email invalide')
+                toast.error('Email invalide')
                 setLoading(false)
                 return
             }

@@ -7,10 +7,13 @@ import { toast } from 'sonner'
 import { Loader2, Check, Save, Trash2, Globe, Twitter, Instagram, Linkedin } from 'lucide-react'
 import { getBoxShadow } from '@/lib/utils'
 import { fontMap } from '@/styles/fonts'
+import { DEFAULT_THEME } from '@/lib/constants'
 
 interface ThemeEditorProps {
     themes: Theme[]
     projectId: string
+    hasIndexPage?: boolean
+    initialConfig?: PageConfig
 }
 
 const normalizeHex = (hex: string): string => {
@@ -28,21 +31,21 @@ const normalizeHex = (hex: string): string => {
     return `#${cleanHex}`
 }
 
-export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorProps) {
+export function ThemeEditor({ themes: initialThemes, projectId, hasIndexPage = true, initialConfig }: ThemeEditorProps) {
     const [themes, setThemes] = useState<Theme[]>(initialThemes)
     const [selectedThemeId, setSelectedThemeId] = useState<string | null>(initialThemes.length > 0 ? initialThemes[0].id : null)
     const [config, setConfig] = useState<PageConfig>(() => {
-        const baseConfig = initialThemes.length > 0 ? initialThemes[0].config : {}
+        const baseConfig = initialConfig || (initialThemes.length > 0 ? initialThemes[0].config : DEFAULT_THEME)
         return {
             ...baseConfig,
             colors: {
-                background: baseConfig.colors?.background || baseConfig.backgroundColor || '#ffffff',
+                background: baseConfig.colors?.background || '#ffffff',
                 outerBackground: baseConfig.colors?.outerBackground || '#0a0a0a',
-                primary: baseConfig.colors?.primary || baseConfig.buttonColor || '#000000',
-                secondary: baseConfig.colors?.secondary || baseConfig.secondaryColor || '#e5e7eb',
-                text: baseConfig.colors?.text || baseConfig.textColor || '#1f2937',
-                link: baseConfig.colors?.link || baseConfig.linkColor || '#000000',
-                buttonText: baseConfig.colors?.buttonText || baseConfig.buttonTextColor || '#ffffff'
+                primary: baseConfig.colors?.primary || '#000000',
+                secondary: baseConfig.colors?.secondary || '#e5e7eb',
+                text: baseConfig.colors?.text || '#1f2937',
+                link: baseConfig.colors?.link || '#000000',
+                buttonText: baseConfig.colors?.buttonText || '#ffffff'
             },
             borders: {
                 radius: baseConfig.borders?.radius || '8px',
@@ -50,7 +53,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                 style: baseConfig.borders?.style || 'solid'
             },
             typography: {
-                fontFamily: baseConfig.typography?.fontFamily || baseConfig.fontFamily || 'inter'
+                fontFamily: baseConfig.typography?.fontFamily || 'inter'
             },
             dividers: {
                 style: baseConfig.dividers?.style || 'solid',
@@ -116,8 +119,15 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
         setIsSaving(true)
         try {
             if (selectedThemeId && selectedThemeId !== 'new') {
-                const result = await updateTheme(selectedThemeId, themeName, config)
+                const result = await updateTheme(selectedThemeId, themeName, config, projectId)
                 if (result.error) throw new Error(result.error)
+                
+                // If it was the system theme, update state with the newly created project theme
+                if ((result as any).theme && (result as any).isNew) {
+                    setThemes(prev => [ (result as any).theme, ...prev ])
+                    setSelectedThemeId((result as any).theme.id)
+                }
+                
                 toast.success('Thème mis à jour')
             } else {
                 const result = await saveTheme(themeName, config, projectId)
@@ -245,7 +255,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                 className="w-full rounded-md border-white/10 bg-pv-dark-100 shadow-sm focus:border-pv-brand-500 focus:ring-pv-brand-500 text-pv-16 font-pv-jost p-2 border text-pv-white-0 placeholder:text-pv-white-0/30 focus:placeholder-transparent"
                             >
                                 <option value="new">+ Créer un nouveau thème</option>
-                                {themes.map(t => (
+                                {Array.isArray(themes) && themes.map(t => (
                                     <option key={t.id} value={t.id}>{t.name}</option>
                                 ))}
                             </select>
@@ -489,14 +499,19 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                                 <Trash2 size={16} /> Supprimer le thème
                             </button>
                         </div>
-
-                        {/* Debug Info */}
-                        {/* <pre className="text-xs text-gray-400 mt-4 overflow-hidden">{JSON.stringify(config.shadows, null, 2)}</pre> */}
                     </div>
                 </div>
 
                 {/* Right: Preview (Fixed Aspect Ratio) */}
-                <div className={`bg-pv-dark-200 w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 relative flex items-center justify-center rounded-2xl border border-white-0/5 ${activeView === 'preview' ? 'flex' : 'hidden lg:flex'}`}>
+                <div className={`bg-pv-dark-200 w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 relative flex flex-col items-center justify-center rounded-2xl border border-white-0/5 ${activeView === 'preview' ? 'flex' : 'hidden lg:flex'}`}>
+                    {!hasIndexPage && (
+                        <div className="absolute top-4 left-4 right-4 z-20 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 flex items-center gap-3">
+                            <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                            <p className="text-[11px] font-pv-inter text-amber-200 opacity-80 uppercase tracking-widest">
+                                Aperçu générique (aucune page &quot;index&quot; trouvée)
+                            </p>
+                        </div>
+                    )}
                     <div
                         className="w-full max-w-[400px] min-w-[360px] aspect-[2/3] shadow-2xl transition-all duration-300 p-8 pt-10 overflow-y-auto scrollbar-hide border-gray-900"
                         style={{
@@ -616,8 +631,7 @@ export function ThemeEditor({ themes: initialThemes, projectId }: ThemeEditorPro
                         </div>
                     </div>
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     )
 }

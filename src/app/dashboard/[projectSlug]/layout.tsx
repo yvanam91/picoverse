@@ -30,7 +30,7 @@ export default async function DashboardLayout({
     let username = null
 
     if (user) {
-        const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).single()
+        const { data: profile } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle()
         username = profile?.username
     }
 

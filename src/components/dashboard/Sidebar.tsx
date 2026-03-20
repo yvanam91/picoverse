@@ -52,16 +52,8 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
 
     return (
         <BorderGlow
-            className={`flex flex-col h-full bg-pv-dark-0 text-pv-white-0 ${className}`}
-            backgroundColor="var(--pv-dark-0)"
-            edgeSensitivity={30}
-            glowColor="40 80 80"
-            borderRadius={0}
-            glowRadius={40}
-            glowIntensity={1.0}
-            coneSpread={25}
+            className={`sidebar-glow h-full bg-pv-dark-0 text-pv-white-0 ${className}`}
             animated={false}
-            colors={['#c084fc', '#f472b6', '#38bdf8']}
         >
             {/* Header / Project Selector */}
             <div className="p-4 relative">
@@ -159,6 +151,19 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
                 })}
 
                 {/* Public Link */}
+                <div className="pt-4 mt-4 border-t border-white-0/5">
+                    {username && (
+                        <a
+                            href={`/${username}/${projectSlug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center px-3 py-2 text-sm font-pv-bold text-pv-brand-500 hover:bg-pv-brand-500/5 rounded-md transition-all group"
+                        >
+                            <ExternalLink className="mr-3 h-5 w-5 shrink-0 group-hover:scale-110 transition-transform" />
+                            Voir en ligne
+                        </a>
+                    )}
+                </div>
             </nav>
 
             {/* Plan Usage Section */}

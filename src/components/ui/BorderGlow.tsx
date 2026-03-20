@@ -1,5 +1,4 @@
 import { useRef, useCallback, useEffect, type ReactNode } from 'react';
-import './BorderGlow.css';
 
 interface BorderGlowProps {
   children?: ReactNode;
@@ -71,16 +70,16 @@ function animateValue({ start = 0, end = 100, duration = 1000, delay = 0, ease =
 const BorderGlow: React.FC<BorderGlowProps> = ({
   children,
   className = '',
-  edgeSensitivity = 30,
-  glowColor = '40 80 80',
-  backgroundColor = '#060010',
-  borderRadius = 28,
-  glowRadius = 40,
-  glowIntensity = 1.0,
-  coneSpread = 25,
+  edgeSensitivity,
+  glowColor,
+  backgroundColor,
+  borderRadius,
+  glowRadius,
+  glowIntensity,
+  coneSpread,
   animated = false,
-  colors = ['#c084fc', '#f472b6', '#38bdf8'],
-  fillOpacity = 0.5,
+  colors,
+  fillOpacity,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -147,23 +146,28 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
     });
   }, [animated]);
 
-  const glowVars = buildGlowVars(glowColor, glowIntensity);
+  const customStyle: React.CSSProperties = {};
+  if (backgroundColor) (customStyle as any)['--card-bg'] = backgroundColor;
+  if (edgeSensitivity !== undefined) (customStyle as any)['--edge-sensitivity'] = edgeSensitivity;
+  if (borderRadius !== undefined) (customStyle as any)['--border-radius'] = `${borderRadius}px`;
+  if (glowRadius !== undefined) (customStyle as any)['--glow-padding'] = `${glowRadius}px`;
+  if (coneSpread !== undefined) (customStyle as any)['--cone-spread'] = coneSpread;
+  if (fillOpacity !== undefined) (customStyle as any)['--fill-opacity'] = fillOpacity;
+
+  if (glowColor) {
+    Object.assign(customStyle, buildGlowVars(glowColor, glowIntensity ?? 1.0));
+  }
+
+  if (colors && colors.length > 0) {
+    Object.assign(customStyle, buildGradientVars(colors));
+  }
 
   return (
     <div
       ref={cardRef}
       onPointerMove={handlePointerMove}
       className={`border-glow-card ${className}`}
-      style={{
-        '--card-bg': backgroundColor,
-        '--edge-sensitivity': edgeSensitivity,
-        '--border-radius': `${borderRadius}px`,
-        '--glow-padding': `${glowRadius}px`,
-        '--cone-spread': coneSpread,
-        '--fill-opacity': fillOpacity,
-        ...glowVars,
-        ...buildGradientVars(colors),
-      } as React.CSSProperties}
+      style={customStyle}
     >
       <span className="edge-light" />
       <div className="border-glow-inner">
