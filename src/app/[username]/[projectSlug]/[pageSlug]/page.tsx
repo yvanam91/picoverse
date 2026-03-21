@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Project, Page, Block, PageConfig } from '@/types/database'
 import { Metadata } from 'next'
 import { BlockFactory } from '@/components/shared/BlockFactory'
@@ -9,7 +10,7 @@ import { fontMap } from '@/styles/fonts'
 import { AnalyticsTracker } from '@/components/public/AnalyticsTracker'
 import { DEFAULT_THEME } from '@/lib/constants'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // Cache for 1 hour
 
 // Fetch logic separated for Metadata and Page
 async function getPageData(username: string, projectSlug: string, pageSlug: string) {
@@ -161,10 +162,12 @@ export default async function PublicPage({
                 {/* Header Background (Parity with Editor) */}
                 {effectiveConfig.headerBackgroundImage && (
                     <div className="absolute top-0 left-0 right-0 h-64 z-0">
-                        <img
+                        <Image
                             src={effectiveConfig.headerBackgroundImage}
                             alt=""
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            priority
                         />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-transparent"></div>
                     </div>

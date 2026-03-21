@@ -1,4 +1,5 @@
 import { PageConfig } from '@/types/database'
+import Image from 'next/image'
 
 interface HeaderBlockProps {
     content: {
@@ -15,10 +16,12 @@ export function HeaderBlock({ content, config }: HeaderBlockProps) {
         <div className="text-center mb-6 w-full">
             {content.url && (
                 <div className="relative w-28 h-28 mx-auto mb-4">
-                    <img
+                    <Image
                         src={content.url}
                         alt={content.title || 'Header'}
-                        className="w-full h-full object-cover rounded-full border-4 border-white shadow-md"
+                        fill
+                        className="object-cover rounded-full border-4 border-white shadow-md"
+                        priority
                     />
                 </div>
             )}
