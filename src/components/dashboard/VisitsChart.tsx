@@ -35,40 +35,50 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function VisitsChart({ data }: VisitsChartProps) {
     return (
-        <div className="w-full h-[300px] md:h-[400px]">
+        <div className="w-full h-[300px] md:h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                     data={data}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
                 >
                     <defs>
                         <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#A997DF" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#A997DF" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                         </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
+                    <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke="rgba(255,255,255,0.03)" 
+                        vertical={false} 
+                    />
                     <XAxis
                         dataKey="date"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'rgba(243, 238, 248, 0.4)', fontSize: 10 }}
+                        tick={{ fill: 'rgba(255, 255, 255, 0.4)', fontSize: 10, fontFamily: 'var(--font-jost)' }}
                         tickFormatter={(str) => format(parseISO(str), 'dd MMM', { locale: fr })}
-                        minTickGap={30}
+                        dy={10}
+                        minTickGap={20}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'rgba(243, 238, 248, 0.4)', fontSize: 10 }}
+                        tick={{ fill: 'rgba(255, 255, 255, 0.4)', fontSize: 10, fontFamily: 'var(--font-jost)' }}
+                        dx={-5}
                     />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip 
+                        content={<CustomTooltip />} 
+                        cursor={{ stroke: 'rgba(139, 92, 246, 0.2)', strokeWidth: 2 }}
+                    />
                     <Area
                         type="monotone"
                         dataKey="visits"
-                        stroke="#A997DF"
+                        stroke="#8b5cf6"
                         strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#colorVisits)"
+                        activeDot={{ r: 6, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2 }}
                         animationDuration={1500}
                     />
                 </AreaChart>
