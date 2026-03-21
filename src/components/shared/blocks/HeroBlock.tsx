@@ -1,4 +1,5 @@
 import { ThemeConfig } from '@/types/database'
+import Image from 'next/image'
 
 interface HeroBlockProps {
     content: {
@@ -29,11 +30,13 @@ export function HeroBlock({ content, config }: HeroBlockProps) {
             }}
         >
             {content.url && (
-                <div className="w-full @md:w-1/2">
-                    <img
+                <div className="w-full @md:w-1/2 relative h-64">
+                    <Image
                         src={content.url}
                         alt={content.title}
-                        className="w-full h-64 object-cover rounded-xl shadow-sm"
+                        fill
+                        className="object-cover rounded-xl shadow-sm"
+                        priority
                     />
                 </div>
             )}

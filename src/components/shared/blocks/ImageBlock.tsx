@@ -1,4 +1,5 @@
 import { ThemeConfig } from '@/types/database'
+import Image from 'next/image'
 
 interface ImageBlockProps {
     content: {
@@ -10,12 +11,16 @@ interface ImageBlockProps {
 
 export function ImageBlock({ content, config }: ImageBlockProps) {
     return (
-        <div className="w-full">
-            <img
+        <div className="w-full relative">
+            <Image
                 src={content.url}
                 alt={content.title || 'Image'}
-                className="w-full h-auto rounded-lg shadow-sm"
-                style={{ maxHeight: '500px', objectFit: 'contain' }}
+                width={0}
+                height={0}
+                sizes="100vw"
+                className="w-full h-auto rounded-lg shadow-sm object-cover"
+                style={{ maxHeight: '500px' }}
+                priority
             />
         </div>
     )
