@@ -20,8 +20,13 @@ export default function LandingPage() {
                 />
             </div>
 
-            <div className="relative z-10 flex flex-col items-center justify-center px-4 py-20 text-center sm:px-6 lg:px-8 pointer-events-none">
+            <div className="relative z-10 flex flex-col items-center justify-center px-4 pt-12 pb-20 text-center sm:px-6 lg:px-8 pointer-events-none">
                 <div className="max-w-4xl space-y-8 pointer-events-auto">
+                    <img
+                        src="/mono_gradient_dark.svg"
+                        alt="Picoverse Logo"
+                        className="mx-auto mb-8 max-w-[120px] w-full h-auto"
+                    />
                     <h1 className="text-4xl font-bold tracking-tight sm:text-6xl text-[var(--foreground)] font-[var(--font-heading)]">
                         Picoverse : Le page builder minimaliste pour votre présence en ligne.
                     </h1>

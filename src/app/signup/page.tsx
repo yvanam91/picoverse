@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Eye, EyeOff, Loader2, Check, X, Mail } from 'lucide-react' // Added Mail icon
 import { toast } from 'sonner'
 import { checkUsernameAvailability, signUp } from '../auth/actions' // Updated import
+import { LegalModal } from '@/components/LegalModal'
+import { CGUContent, ConfidentialiteContent } from '@/components/LegalContent'
 
 const normalizeForSlug = (name: string) => {
     return name
@@ -35,6 +37,7 @@ export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [rgpd, setRgpd] = useState(false)
     const [signupSuccess, setSignupSuccess] = useState(false)
+    const [activeModal, setActiveModal] = useState<'cgu' | 'privacy' | null>(null)
     const router = useRouter()
 
     const normalizedUsername = normalizeForSlug(username)
@@ -347,7 +350,23 @@ export default function SignupPage() {
                         </div>
                         <div className="ml-3 text-sm leading-6">
                             <label htmlFor="rgpd" className="text-gray-600">
-                                J'accepte les conditions d'utilisation et la politique de confidentialité (RGPD).
+                                J'accepte les{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveModal('cgu')}
+                                    className="font-semibold text-indigo-600 hover:text-indigo-500 underline underline-offset-4 decoration-indigo-200"
+                                >
+                                    conditions d'utilisation
+                                </button>
+                                {' '}et la{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveModal('privacy')}
+                                    className="font-semibold text-indigo-600 hover:text-indigo-500 underline underline-offset-4 decoration-indigo-200"
+                                >
+                                    politique de confidentialité
+                                </button>
+                                {' '}(RGPD).
                             </label>
                         </div>
                     </div>
@@ -368,6 +387,23 @@ export default function SignupPage() {
                     </div>
                 </form>
             </div>
+
+            {/* Modals */}
+            <LegalModal
+                isOpen={activeModal === 'cgu'}
+                onClose={() => setActiveModal(null)}
+                title="Conditions Générales d'Utilisation"
+            >
+                <CGUContent />
+            </LegalModal>
+
+            <LegalModal
+                isOpen={activeModal === 'privacy'}
+                onClose={() => setActiveModal(null)}
+                title="Politique de Confidentialité"
+            >
+                <ConfidentialiteContent />
+            </LegalModal>
         </div>
     )
 }

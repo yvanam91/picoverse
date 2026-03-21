@@ -35,13 +35,13 @@ export async function SmartCTA({ className, variant = 'hero' }: SmartCTAProps) {
             <Link
                 href={href}
                 className={cn(
-                    "pv-primary",
-                    "max-[420px]:aspect-square max-[420px]:p-0 max-[420px]:w-10 max-[420px]:h-10",
+                    "pv-primary shrink-0",
+                    "max-[420px]:size-10 max-[420px]:p-0",
                     className
                 )}
             >
                 <span className="max-[420px]:hidden">{label}</span>
-                <User className="hidden max-[420px]:block w-5 h-5" />
+                <User className="hidden max-[420px]:block size-5" />
             </Link>
         )
     }
