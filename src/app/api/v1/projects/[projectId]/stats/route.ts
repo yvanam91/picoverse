@@ -19,7 +19,7 @@ export async function GET(
         .from('projects')
         .select('user_id')
         .eq('id', projectId)
-        .single()
+        .maybeSingle()
 
     if (projectError || !project || project.user_id !== user.id) {
         return new NextResponse('Accès refusé', { status: 403 })

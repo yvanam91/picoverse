@@ -21,7 +21,7 @@ async function getPageData(username: string, projectSlug: string, pageSlug: stri
         .from('profiles')
         .select('id')
         .eq('username', username)
-        .single()
+        .maybeSingle()
 
     if (!user) return null
 
@@ -31,7 +31,7 @@ async function getPageData(username: string, projectSlug: string, pageSlug: stri
         .select('*') // We need default_theme_id
         .eq('slug', projectSlug)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (!project) return null
 
@@ -41,7 +41,7 @@ async function getPageData(username: string, projectSlug: string, pageSlug: stri
         .select('*, theme:themes(*)') // Alias themes to theme to match type
         .eq('project_id', project.id)
         .eq('slug', pageSlug)
-        .single() // Ensure single object return
+        .maybeSingle() // Ensure single object return
 
     if (!page) return null
 

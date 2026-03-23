@@ -24,7 +24,7 @@ export default async function ProjectPage({
         .from('profiles')
         .select('id')
         .eq('username', username)
-        .single()
+        .maybeSingle()
 
     if (!user) notFound()
 
@@ -34,7 +34,7 @@ export default async function ProjectPage({
         .select('*')
         .eq('slug', projectSlug)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (!project) notFound()
 

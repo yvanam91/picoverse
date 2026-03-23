@@ -14,7 +14,7 @@ export default async function AccountPage() {
         .from('profiles')
         .select('username')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
     return (
         <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow-sm border border-gray-100">

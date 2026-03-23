@@ -15,6 +15,11 @@ export async function deleteProject(projectId: string) {
 
     const supabase = await createClient()
 
+    // Environment variable check as per behavior rules
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase environment variables are missing')
+    }
+
     // 1. Verify User
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -300,7 +305,7 @@ export async function createPage(projectId: string, formData: FormData) {
             .from('profiles')
             .select('plan')
             .eq('id', user.id)
-            .single()
+            .maybeSingle()
 
         const planName = (profile?.plan || 'free').toLowerCase()
         const { data: planConfig } = await supabase
@@ -331,7 +336,7 @@ export async function createPage(projectId: string, formData: FormData) {
             .from('projects')
             .select('default_theme_id, slug')
             .eq('id', projectId)
-            .single()
+            .maybeSingle()
 
         // 2. Get Theme Config (Inheritance)
         let themeConfig = DEFAULT_THEME
@@ -554,7 +559,7 @@ export async function updateBlockPositions(projectId: string, pageId: string, up
         .select('id, slug')
         .eq('id', projectId)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (projectError || !project) {
         console.error('Project not found or error:', projectError)
@@ -602,7 +607,7 @@ export async function updateBlockPositions(projectId: string, pageId: string, up
             if (profile?.username) {
                 revalidatePath(`/p/${profile.username}/${project.slug}`)
 
-                const { data: page } = await supabase.from('pages').select('slug').eq('id', pageId).single()
+                const { data: page } = await supabase.from('pages').select('slug').eq('id', pageId).maybeSingle()
                 if (page) {
                     revalidatePath(`/p/${profile.username}/${project.slug}/${page.slug}`)
                 }
@@ -718,7 +723,7 @@ export async function deletePage(projectId: string, pageId: string) {
         .from('pages')
         .select('project_id')
         .eq('id', pageId)
-        .single()
+        .maybeSingle()
 
     if (pageError || !page) {
         return { error: 'Page not found' }
@@ -730,7 +735,7 @@ export async function deletePage(projectId: string, pageId: string) {
         .select('user_id')
         .eq('id', page.project_id)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (projectError || !project) {
         return { error: 'Unauthorized' }
