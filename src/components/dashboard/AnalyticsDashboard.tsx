@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import useSWR from 'swr'
+import React, { useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import {
     Users,
     Smartphone,
@@ -12,19 +12,21 @@ import { VisitsChart } from '@/components/dashboard/VisitsChart'
 import { PagesTable } from '@/components/dashboard/PagesTable'
 import { LinksPerformanceTable } from '@/components/dashboard/LinksPerformanceTable'
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
-
 interface AnalyticsDashboardProps {
-    projectId: string
-    projectName: string
+    initialData: any
+    projectSlug: string
+    period: '7d' | '30d'
 }
 
-export function AnalyticsDashboard({ projectId, projectName }: AnalyticsDashboardProps) {
-    const [period, setPeriod] = useState<'7d' | '30d'>('7d')
-    const { data, error, isLoading } = useSWR(
-        `/api/v1/projects/${projectId}/stats?period=${period}`,
-        fetcher
-    )
+export function AnalyticsDashboard({ initialData, projectSlug, period }: AnalyticsDashboardProps) {
+    const router = useRouter()
+    const data = initialData
+    const isLoading = false
+    const error = data?.error
+
+    const setPeriod = (newPeriod: '7d' | '30d') => {
+        router.push(`/dashboard/${projectSlug}/stats?period=${newPeriod}`)
+    }
 
     const mostVisitedPage = useMemo(() => {
         if (!data?.pages || data.pages.length === 0) return null
@@ -51,7 +53,7 @@ export function AnalyticsDashboard({ projectId, projectName }: AnalyticsDashboar
     }, [data])
 
     if (error) return (
-        <div className="p-8 text-center bg-red-50 text-red-600 rounded-xl border border-red-100">
+        <div className="p-8 text-center bg-pv-dark-0/50 text-red-400 rounded-xl border border-white-0/5 mt-10">
             Erreur lors du chargement des statistiques.
         </div>
     )
@@ -64,7 +66,7 @@ export function AnalyticsDashboard({ projectId, projectName }: AnalyticsDashboar
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 className="font-pv-inter font-pv-bold text-pv-12 text-white-0 uppercase tracking-widest">
-                                Analytics : {projectName}
+                                Analytics : {data?.projectName || 'Chargement...'}
                             </h1>
                             <p className="mt-1 font-pv-inter font-pv-regular text-pv-12 text-white-0 opacity-70">
                                 Suivez les performances de votre projet en temps réel.
@@ -159,9 +161,9 @@ export function AnalyticsDashboard({ projectId, projectName }: AnalyticsDashboar
                         <h2 className="text-lg font-pv-jost font-pv-bold text-white-0 uppercase tracking-wide">Évolution des visites</h2>
                         {isLoading && <Loader2 className="w-5 h-5 text-pv-brand-500 animate-spin" />}
                     </div>
-
+ 
                     {isLoading ? (
-                        <div className="w-full h-[300px] bg-pv-dark-100/50 animate-pulse rounded-xl flex items-center justify-center">
+                        <div className="w-full h-[300px] md:h-[400px] bg-pv-dark-100/50 animate-pulse rounded-xl flex items-center justify-center">
                             <span className="text-white-0/20 text-sm font-pv-bold uppercase tracking-widest">Calcul des données...</span>
                         </div>
                     ) : (

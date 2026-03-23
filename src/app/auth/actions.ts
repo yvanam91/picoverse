@@ -5,6 +5,14 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { headers, cookies } from 'next/headers'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { Resend } from 'resend'
+import WelcomeEmail from '../../../emails/welcomeEmail'
+
+if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY is missing from environment variables')
+}
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 // --- TYPES ---
 
@@ -105,13 +113,19 @@ export async function checkUsernameAvailability(username: string): Promise<{ ava
     if (!USERNAME_REGEX.test(username)) return { available: false, error: 'Caractères invalides (lettres, chiffres, - et _ uniquement)' }
 
     const supabase = await createClient()
+
+    // Environment variable check as per behavior rules
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase environment variables are missing')
+    }
+
     const { data, error } = await supabase
         .from('profiles')
         .select('username')
         .eq('username', username)
-        .single()
+        .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
         console.error('Error checking username:', error)
         return { available: false, error: 'Erreur lors de la vérification' }
     }
@@ -127,6 +141,7 @@ export async function checkUsernameAvailability(username: string): Promise<{ ava
 // Supabase auth.signUp handles email uniqueness.
 
 export async function signUp(prevState: AuthState, formData: FormData): Promise<AuthState> {
+    let success = false
     try {
         const email = formData.get('email') as string
         const password = formData.get('password') as string
@@ -185,6 +200,20 @@ export async function signUp(prevState: AuthState, formData: FormData): Promise<
             return { error: error.message }
         }
 
+        // --- NEW: SEND WELCOME EMAIL VIA RESEND ---
+        try {
+            await resend.emails.send({
+                from: 'Picoverse <yvan@picover.se>',
+                to: [email],
+                subject: 'Bienvenue sur Picoverse !',
+                react: WelcomeEmail({ firstName: rawUsername }),
+            });
+        } catch (emailError) {
+            console.error('Error sending welcome email:', emailError);
+            // We don't block the signup if email fails, but it's good to log
+        }
+        // ------------------------------------------
+
         // Track signup server-side
         try {
             const posthog = getPostHogClient()
@@ -200,24 +229,16 @@ export async function signUp(prevState: AuthState, formData: FormData): Promise<
             console.error('PostHog error:', phError)
         }
 
-        // Set recognized cookie
-        try {
-            const cookieStore = await cookies()
-            cookieStore.set('recognized', 'true', {
-                maxAge: 60 * 60 * 24 * 30, // 30 days
-                path: '/',
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-            })
-        } catch (cookieError) {
-            console.error('Cookie error:', cookieError)
-        }
-
-        return { success: true, message: `Un lien de confirmation a été envoyé à ${email}.` }
+        revalidatePath('/', 'layout')
+        success = true
+        return { success: true, message: 'Bienvenue ! Ton compte est prêt.' }
     } catch (err: any) {
         console.error('Unhandled signUp error:', err)
         return { error: "Une erreur inattendue est survenue lors de l'inscription." }
+    }
+
+    if (success) {
+        redirect('/dashboard')
     }
 }
 
@@ -252,7 +273,7 @@ export async function signIn(prevState: AuthState, formData: FormData): Promise<
                 .from('profiles')
                 .select('id')
                 .eq('id', user.id)
-                .single()
+                .maybeSingle()
 
             if (!profile) {
                 console.log('Profile missing for user, creating it from metadata...')

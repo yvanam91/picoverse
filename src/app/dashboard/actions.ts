@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { subDays, format, eachDayOfInterval } from 'date-fns'
 import { PLAN_LIMITS, getPlanLimits } from '@/utils/plan-limits'
 import type { Block, PageConfig, Project, BlockType, Theme, Page } from '@/types/database'
 import { normalizeSlug } from '@/lib/utils'
@@ -13,6 +14,11 @@ export async function deleteProject(projectId: string) {
     console.log('--- Attempting to delete project:', projectId)
 
     const supabase = await createClient()
+
+    // Environment variable check as per behavior rules
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase environment variables are missing')
+    }
 
     // 1. Verify User
     const { data: { user } } = await supabase.auth.getUser()
@@ -299,7 +305,7 @@ export async function createPage(projectId: string, formData: FormData) {
             .from('profiles')
             .select('plan')
             .eq('id', user.id)
-            .single()
+            .maybeSingle()
 
         const planName = (profile?.plan || 'free').toLowerCase()
         const { data: planConfig } = await supabase
@@ -330,7 +336,7 @@ export async function createPage(projectId: string, formData: FormData) {
             .from('projects')
             .select('default_theme_id, slug')
             .eq('id', projectId)
-            .single()
+            .maybeSingle()
 
         // 2. Get Theme Config (Inheritance)
         let themeConfig = DEFAULT_THEME
@@ -553,7 +559,7 @@ export async function updateBlockPositions(projectId: string, pageId: string, up
         .select('id, slug')
         .eq('id', projectId)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (projectError || !project) {
         console.error('Project not found or error:', projectError)
@@ -601,7 +607,7 @@ export async function updateBlockPositions(projectId: string, pageId: string, up
             if (profile?.username) {
                 revalidatePath(`/p/${profile.username}/${project.slug}`)
 
-                const { data: page } = await supabase.from('pages').select('slug').eq('id', pageId).single()
+                const { data: page } = await supabase.from('pages').select('slug').eq('id', pageId).maybeSingle()
                 if (page) {
                     revalidatePath(`/p/${profile.username}/${project.slug}/${page.slug}`)
                 }
@@ -717,7 +723,7 @@ export async function deletePage(projectId: string, pageId: string) {
         .from('pages')
         .select('project_id')
         .eq('id', pageId)
-        .single()
+        .maybeSingle()
 
     if (pageError || !page) {
         return { error: 'Page not found' }
@@ -729,7 +735,7 @@ export async function deletePage(projectId: string, pageId: string) {
         .select('user_id')
         .eq('id', page.project_id)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (projectError || !project) {
         return { error: 'Unauthorized' }
@@ -1001,5 +1007,131 @@ export async function getPlanUsage(projectId?: string) {
             current: pagesCount,
             max: maxPages
         }
+    }
+}
+
+export async function getProjectStats(projectSlug: string, period: '7d' | '30d' = '7d') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    // 1. Resolve Project (Slug -> ID)
+    const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('slug', projectSlug)
+        .single()
+
+    if (projectError || !project) {
+        console.log('Stats error (Project Resolve):', projectError)
+        return { error: 'Projet introuvable' }
+    }
+
+    const projectId = project.id
+    const days = period === '30d' ? 30 : 7
+
+    // 2. Parse Date Range (following user instruction for ISO)
+    const endDate = new Date()
+    const startDate = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000)
+    
+    // ISO formatting as requested
+    const startDateStr = startDate.toISOString().split('T')[0]
+    const endDateStr = endDate.toISOString().split('T')[0]
+
+    // 3. Fetch Aggregate Stats
+    const { data: dailyResults, error: statsError } = await supabase
+        .from('daily_project_stats')
+        .select('*')
+        .eq('project_id', projectId)
+        .gte('day', startDateStr)
+        .lte('day', endDateStr)
+        .order('day', { ascending: true })
+
+    if (statsError) {
+        console.log('Stats error (daily_project_stats):', statsError)
+    }
+
+    // 4. Fetch Page level stats (using the correct view provided by user)
+    const { data: pageOverview, error: pageOverError } = await supabase
+        .from('project_pages_stats')
+        .select('*')
+        .eq('project_id', projectId)
+
+    if (pageOverError) {
+        console.log('Stats error (project_pages_stats):', pageOverError)
+    }
+
+    // 5. Fetch Link performance stats
+    // Filter by page IDs as stats_links_performance doesn't contain project_id
+    const { data: pagesForLinks } = await supabase.from('pages').select('id').eq('project_id', projectId)
+    const pageIds = pagesForLinks?.map(p => p.id) || []
+
+    let { data: linkStats, error: linksError } = await supabase
+        .from('stats_links_performance')
+        .select('*')
+        .in('page_id', pageIds)
+
+    if (linksError) {
+        console.log('Stats error (stats_links_performance):', linksError)
+        linkStats = []
+    }
+
+    // Sum clicks for page overview MERGE
+    const normalizedPages = (pageOverview || []).map((p: any) => {
+        const pageId = p.page_id || p.id
+        const pageClicks = (linkStats || [])
+            .filter((l: any) => l.page_id === pageId)
+            .reduce((sum: number, l: any) => sum + (l.click_count || 0), 0)
+
+        return {
+            ...p,
+            visit_count: p.visit_count ?? p.total_visits ?? 0,
+            click_count: pageClicks
+        }
+    })
+
+    // 6. Gap Filling
+    const interval = eachDayOfInterval({ start: startDate, end: endDate })
+    const statsMap = new Map<string, number>()
+    const deviceStats: Record<string, number> = {
+        mobile: 0,
+        tablet: 0,
+        desktop: 0
+    }
+
+    dailyResults?.forEach(row => {
+        const current = statsMap.get(row.day) || 0
+        const count = row.visit_count || row.total_visits || 0
+        statsMap.set(row.day, current + count)
+
+        const d = row.device as string
+        if (d && deviceStats.hasOwnProperty(d)) {
+            deviceStats[d] += count
+        } else {
+            deviceStats.desktop += count
+        }
+    })
+
+    const chartData = interval.map(day => {
+        const dateStr = format(day, 'yyyy-MM-dd')
+        return {
+            date: dateStr,
+            visits: statsMap.get(dateStr) || 0
+        }
+    })
+
+    const totalVisits = Array.from(statsMap.values()).reduce((acc, curr) => acc + curr, 0)
+
+    return {
+        projectId,
+        projectName: project.name,
+        period,
+        totalVisits,
+        chartData,
+        pages: normalizedPages,
+        links: linkStats || [],
+        devices: deviceStats,
+        generatedAt: new Date().toISOString()
     }
 }
