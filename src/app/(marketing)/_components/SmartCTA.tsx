@@ -41,7 +41,7 @@ export async function SmartCTA({ className, variant = 'hero' }: SmartCTAProps) {
                 )}
             >
                 <span className="max-[420px]:hidden">{label}</span>
-                <User className="hidden max-[420px]:block size-5" />
+                <User className="hidden max-[420px]:block w-5 h-5 shrink-0" />
             </Link>
         )
     }
