@@ -22,7 +22,9 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { addBlockWithProject, updateBlock, deleteBlock, updatePageConfig, addBlockWithContent, updateBlockPositions, updateProjectContent } from '@/app/dashboard/actions'
-import { Plus, GripVertical, Trash2, Save, Eye, EyeOff, LayoutTemplate, Type, Heading, Minus, Image as ImageIcon, Twitter, Upload, Loader2, Globe, Settings2, FileText, AlignLeft, AlignCenter, AlignRight, Columns, Instagram, Facebook, Linkedin, Github, Check, ExternalLink, X, UserPlus } from 'lucide-react'
+import { Globe, Linkedin, Save, Trash2, Settings2, Image as ImageIcon, Layout, Type, Palette, Upload, Loader2, GripVertical, Plus, ChevronRight, Laptop, Smartphone, Eye, ExternalLink, RefreshCw, X, LayoutTemplate, Check, AlignLeft, AlignCenter, AlignRight, FileText, EyeOff, UserPlus, Heading, Minus } from 'lucide-react'
+import { XIcon, GithubIcon, InstagramIcon, FacebookIcon, OnlyFansIcon, RedditIcon, DiscordIcon, SoundcloudIcon } from '../shared/icons/SocialIcons'
+import { Block, PageConfig, BlockType, Page, Theme } from '@/types/database'
 import { getBoxShadow, cn } from '@/lib/utils'
 import { HeaderBlock } from '@/components/shared/blocks/HeaderBlock'
 import { SocialGridBlock } from '@/components/shared/blocks/SocialGridBlock'
@@ -30,13 +32,13 @@ import { LinkBlock } from '@/components/shared/blocks/LinkBlock'
 import { DoubleLinkBlock } from '@/components/shared/blocks/DoubleLinkBlock'
 import { EmbedBlock } from '@/components/shared/blocks/EmbedBlock'
 import { BlockFactory } from '../shared/BlockFactory'
-import type { Block, PageConfig } from '@/types/database'
 import { getEmbedUrl } from '@/lib/embed-utils'
 import { createClient } from '@/utils/supabase/client'
 import { fontMap } from '@/styles/fonts'
 import ClientOnly from '@/components/ClientOnly'
 import { toast } from 'sonner'
 import { ComponentPicker } from './ComponentPicker'
+import { QRCodeCard } from './QRCodeCard'
 import '@/styles/user-pages.css'
 
 interface BlockEditorProps {
@@ -48,6 +50,7 @@ interface BlockEditorProps {
     initialMetaTitle?: string
     initialDescription?: string
     initialTheme?: any // Should ideally be Theme type
+    pageUrl?: string
 }
 
 const DEFAULT_CONFIG: PageConfig = {
@@ -62,20 +65,28 @@ const DEFAULT_CONFIG: PageConfig = {
 // Social Configuration
 const SOCIAL_PROVIDERS = [
     { value: 'globe', label: 'Website', icon: Globe, domain: '', placeholder: 'https://www.monsite.fr/' },
-    { value: 'twitter', label: 'Twitter', icon: Twitter, domain: 'https://twitter.com/', placeholder: '@username' },
-    { value: 'instagram', label: 'Instagram', icon: Instagram, domain: 'https://instagram.com/', placeholder: '@username' },
-    { value: 'facebook', label: 'Facebook', icon: Facebook, domain: 'https://facebook.com/', placeholder: '@username' },
+    { value: 'twitter', label: 'X (Twitter)', icon: XIcon, domain: 'https://x.com/', placeholder: '@username' },
+    { value: 'instagram', label: 'Instagram', icon: InstagramIcon, domain: 'https://instagram.com/', placeholder: '@username' },
+    { value: 'facebook', label: 'Facebook', icon: FacebookIcon, domain: 'https://facebook.com/', placeholder: '@username' },
     { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, domain: 'https://linkedin.com/in/', placeholder: '@username' },
-    { value: 'github', label: 'GitHub', icon: Github, domain: 'https://github.com/', placeholder: '@username' },
+    { value: 'github', label: 'GitHub', icon: GithubIcon, domain: 'https://github.com/', placeholder: '@username' },
+    { value: 'onlyfans', label: 'OnlyFans', icon: OnlyFansIcon, domain: 'https://onlyfans.com/', placeholder: '@username' },
+    { value: 'reddit', label: 'Reddit', icon: RedditIcon, domain: 'https://reddit.com/u/', placeholder: '/username/' },
+    { value: 'discord', label: 'Discord', icon: DiscordIcon, domain: '', placeholder: 'Lien d\'invitation' },
+    { value: 'soundcloud', label: 'SoundCloud', icon: SoundcloudIcon, domain: 'https://soundcloud.com/', placeholder: 'username' },
 ] as const
 
 const SOCIAL_ICONS_MAP: Record<string, any> = {
     globe: Globe,
-    twitter: Twitter,
-    instagram: Instagram,
-    facebook: Facebook,
+    twitter: XIcon,
+    instagram: InstagramIcon,
+    facebook: FacebookIcon,
     linkedin: Linkedin,
-    github: Github
+    github: GithubIcon,
+    onlyfans: OnlyFansIcon,
+    reddit: RedditIcon,
+    discord: DiscordIcon,
+    soundcloud: SoundcloudIcon
 }
 
 interface SortableBlockProps {
@@ -930,7 +941,7 @@ function SortableBlock({ block, isEditing, editState, onEditChange, onSave, onDe
 }
 
 
-export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, initialPublishedState, initialMetaTitle, initialDescription, initialTheme }: BlockEditorProps) {
+export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, initialPublishedState, initialMetaTitle, initialDescription, initialTheme, pageUrl }: BlockEditorProps) {
     const [activeTab, setActiveTab] = useState<'content' | 'settings'>('content')
     // Ensure positions are sorted and visibility is synced from content
     const [blocks, setBlocks] = useState<Block[]>(initialBlocks.sort((a, b) => a.position - b.position).map(b => ({
@@ -1536,6 +1547,17 @@ export function BlockEditor({ projectId, pageId, initialBlocks, initialConfig, i
                         <button onClick={handleSaveSettings} disabled={savingSettings} className="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white p-3 rounded-md hover:bg-indigo-700 disabled:opacity-50 font-medium">
                             {savingSettings ? <Loader2 className="animate-spin h-4 w-4" /> : <Save className="h-4 w-4" />} Enregistrer les réglages
                         </button>
+
+                        {/* Page QR Code Section */}
+                        {pageUrl && (
+                            <div className="pt-6 border-t border-white/10">
+                                <QRCodeCard 
+                                    url={`${typeof window !== 'undefined' ? window.location.origin : ''}${pageUrl}`}
+                                    title="QR Code de la page"
+                                    description="Partagez cette page facilement avec un QR code."
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

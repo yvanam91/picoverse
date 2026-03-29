@@ -1,5 +1,6 @@
 import { PageConfig } from '@/types/database'
-import { Globe, Twitter, Instagram, Facebook, Linkedin, Github } from 'lucide-react'
+import { Globe, Linkedin } from 'lucide-react'
+import { XIcon, FacebookIcon, GithubIcon, InstagramIcon, OnlyFansIcon, RedditIcon, DiscordIcon, SoundcloudIcon } from '../icons/SocialIcons'
 
 interface SocialGridBlockProps {
     content: {
@@ -8,13 +9,17 @@ interface SocialGridBlockProps {
     config: PageConfig
 }
 
-const SOCIAL_ICONS_MAP: Record<string, typeof Globe> = {
+const SOCIAL_ICONS_MAP: Record<string, any> = {
     globe: Globe,
-    twitter: Twitter,
-    instagram: Instagram,
-    facebook: Facebook,
+    twitter: XIcon,
+    instagram: InstagramIcon,
+    facebook: FacebookIcon,
     linkedin: Linkedin,
-    github: Github
+    github: GithubIcon,
+    onlyfans: OnlyFansIcon,
+    reddit: RedditIcon,
+    discord: DiscordIcon,
+    soundcloud: SoundcloudIcon
 }
 
 export function SocialGridBlock({ content, config }: SocialGridBlockProps) {
