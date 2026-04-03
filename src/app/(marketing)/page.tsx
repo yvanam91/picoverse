@@ -32,7 +32,7 @@ export default function LandingPage() {
                     </h1>
 
                     <p className="mx-auto max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-                        Déployez vos pages en quelques minutes... Prenez le contrôle de votre présence sans la complexité technique.
+                        Ne vous contentez pas d'une liste de lien. Offrez une vraie destination à votre audience.
                     </p>
 
                     <div className="flex justify-center">

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, X, Loader2 } from 'lucide-react'
 import { createProject, getPlanUsage } from './actions'
 import { useRouter } from 'next/navigation'
@@ -23,6 +24,11 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
     const { data: planUsage } = useSWR(isOpen ? 'plan-usage' : null, () => getPlanUsage())
     const isLimitReached = planUsage && planUsage.projects.current >= planUsage.projects.max
+
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     async function onSubmit(formData: FormData) {
         setLoading(true)
@@ -53,9 +59,9 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
                 </button>
             )}
 
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-pv-dark-0 rounded-2xl border border-white-0/10 shadow-2xl p-8 animate-in zoom-in-95 duration-200">
+            {isOpen && mounted && createPortal(
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
+                    <div className="w-full max-w-md bg-pv-dark-0 rounded-2xl border border-white-0/10 shadow-2xl p-8 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="text-xl font-pv-jost font-pv-bold text-white-0 uppercase tracking-wide">
                                 Créer un projet
@@ -133,8 +139,10 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
                             </form>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
+
         </>
     )
 }

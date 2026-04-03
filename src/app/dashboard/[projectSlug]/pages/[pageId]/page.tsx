@@ -99,6 +99,7 @@ export default async function EditorPage({
                         <BlockEditor
                             projectId={project.id}
                             pageId={pageId}
+                            pageUrl={username ? `/${username}/${project.slug}/${page.slug}` : undefined}
                             initialBlocks={(blocks as Block[]) || []}
                             initialConfig={(page as Page).config && Object.keys((page as Page).config || {}).length > 0 ? (page as Page).config : (defaultTheme?.config || {})}
                             initialPublishedState={(page as Page).is_published ?? true}

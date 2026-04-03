@@ -121,13 +121,13 @@ export function ThemeEditor({ themes: initialThemes, projectId, hasIndexPage = t
             if (selectedThemeId && selectedThemeId !== 'new') {
                 const result = await updateTheme(selectedThemeId, themeName, config, projectId)
                 if (result.error) throw new Error(result.error)
-                
+
                 // If it was the system theme, update state with the newly created project theme
                 if ((result as any).theme && (result as any).isNew) {
-                    setThemes(prev => [ (result as any).theme, ...prev ])
+                    setThemes(prev => [(result as any).theme, ...prev])
                     setSelectedThemeId((result as any).theme.id)
                 }
-                
+
                 toast.success('Thème mis à jour')
             } else {
                 const result = await saveTheme(themeName, config, projectId)
@@ -504,14 +504,6 @@ export function ThemeEditor({ themes: initialThemes, projectId, hasIndexPage = t
 
                 {/* Right: Preview (Fixed Aspect Ratio) */}
                 <div className={`bg-pv-dark-200 w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 relative flex flex-col items-center justify-center rounded-2xl border border-white-0/5 ${activeView === 'preview' ? 'flex' : 'hidden lg:flex'}`}>
-                    {!hasIndexPage && (
-                        <div className="absolute top-4 left-4 right-4 z-20 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 flex items-center gap-3">
-                            <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                            <p className="text-[11px] font-pv-inter text-amber-200 opacity-80 uppercase tracking-widest">
-                                Aperçu générique (aucune page &quot;index&quot; trouvée)
-                            </p>
-                        </div>
-                    )}
                     <div
                         className="w-full max-w-[400px] min-w-[360px] aspect-[2/3] shadow-2xl transition-all duration-300 p-8 pt-10 overflow-y-auto scrollbar-hide border-gray-900"
                         style={{
