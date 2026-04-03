@@ -117,21 +117,21 @@ export function PageCard({ page, projectSlug, onDelete, username }: PageCardProp
             {/* Custom Confirmation Modal */}
             {showConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-                    <div className="w-full max-w-xs bg-pv-dark-0 rounded-2xl border border-white-0/10 shadow-2xl p-6 animate-in zoom-in-95 duration-200" onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-                        <p className="text-sm font-pv-bold text-white-0 uppercase tracking-tight mb-6 text-center leading-relaxed">
+                    <div className="w-auto min-w-[300px] bg-pv-dark-0 rounded-pv-20 border border-white-0/10 shadow-2xl p-pv-28 animate-in zoom-in-95 duration-200" onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                        <p className="text-sm font-pv-bold text-white-0 uppercase tracking-wider mb-pv-28 text-center leading-relaxed">
                             Confirmer la suppression de la page ?
                         </p>
-                        <div className="flex gap-4">
+                        <div className="flex gap-pv-12 justify-center">
                             <button
                                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShowConfirm(false); }}
-                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-white-0/5 text-white-0/60 hover:text-white-0 rounded-xl text-xs font-pv-bold transition-all uppercase tracking-tight border border-white-0/5"
+                                className="flex items-center justify-center gap-2 py-pv-12 px-pv-20 bg-white-0/5 text-white-0/60 hover:text-white-0 rounded-pv-12 text-xs font-pv-bold transition-all uppercase tracking-tight border border-white-0/5 whitespace-nowrap"
                             >
                                 <X className="h-4 w-4" />
                                 Annuler
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleDelete(); }}
-                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-500 text-white rounded-xl text-xs font-pv-bold hover:bg-red-600 transition-all uppercase tracking-tight shadow-lg shadow-red-500/20"
+                                className="flex items-center justify-center gap-2 py-pv-12 px-pv-20 bg-red-500 text-white rounded-pv-12 text-xs font-pv-bold hover:bg-red-600 transition-all uppercase tracking-tight shadow-lg shadow-red-500/20 whitespace-nowrap"
                             >
                                 <Check className="h-4 w-4" />
                                 Confirmer

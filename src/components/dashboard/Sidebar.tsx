@@ -83,7 +83,6 @@ export function Sidebar({ projectSlug, projects, currentProject, username, class
                         >
                             <div className="flex flex-col items-start truncate min-w-0">
                                 <span className="text-sm font-pv-bold truncate max-w-[120px]">{currentProject.name}</span>
-                                <span className="text-[10px] opacity-50 uppercase tracking-widest">Gratuit</span>
                             </div>
                             <ChevronDown className="h-4 w-4 opacity-30 group-hover:opacity-100 shrink-0 ml-1" />
                         </button>
